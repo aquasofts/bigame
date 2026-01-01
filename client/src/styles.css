@@ -1,0 +1,527 @@
+/* ===== 原 styles.css（你上传的内容） ===== */
+:root{
+  --bg0:#070b14;
+  --bg1:#0b1020;
+  --text: rgba(238,242,255,.92);
+  --muted: rgba(192,202,232,.75);
+  --line: rgba(37,50,87,.55);
+  --card: rgba(16,22,44,.62);
+  --card2: rgba(18,26,52,.72);
+  --shadow: 0 18px 60px rgba(0,0,0,.45);
+  --good: #49ff9b;
+  --bad: #ff5c6a;
+  --a: #49ff9b;
+  --b: #6ab7ff;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(1000px 600px at 15% -10%, rgba(106,168,255,.18), transparent 60%),
+    radial-gradient(900px 600px at 90% 20%, rgba(169,123,255,.16), transparent 55%),
+    radial-gradient(800px 500px at 50% 120%, rgba(76,255,181,.10), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", Arial;
+}
+
+.gRoot{ min-height:100%; display:flex; flex-direction:column; }
+.gTopbar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 14px;
+  width: min(1200px, 96vw);
+  margin: 14px auto 0;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(14,20,40,.75);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 10px;
+  z-index: 10;
+}
+
+.gBrand{ display:flex; flex-direction:column; gap:4px; }
+.gTitle{ font-weight: 900; letter-spacing: .3px; font-size: 16px; }
+.gSub{ color: var(--muted); font-size: 12px; }
+
+.gStatusPills{ display:flex; align-items:center; gap: 10px; flex-wrap: wrap; justify-content:flex-end; }
+.pill{
+  display:inline-flex; align-items:center; gap: 8px;
+  font-size: 12px;
+  color: rgba(214,221,246,.9);
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(37,50,87,.55);
+  background: rgba(10,14,28,.55);
+}
+.pill b{ color: rgba(246,247,255,.95); font-weight: 800; }
+.pillBtn{ cursor:pointer; }
+.pillBtn:disabled{ opacity:.55; cursor:not-allowed; }
+.ok{ color: var(--good); }
+.no{ color: var(--bad); }
+
+.gMain{
+  width: min(1200px, 96vw);
+  margin: 14px auto 0;
+  display:grid;
+  grid-template-columns: 360px 1fr;
+  gap: 14px;
+}
+
+.panel{
+  border-radius: 18px;
+  border:1px solid rgba(37,50,87,.62);
+  background: rgba(12,16,34,.55);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  overflow:hidden;
+}
+.panelHeader{ margin-bottom: 12px; }
+.panelTitle{ font-weight: 900; letter-spacing:.2px; }
+.panelSub{ color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+.card{
+  border-radius: 16px;
+  border:1px solid rgba(37,50,87,.55);
+  background: rgba(15,23,48,.55);
+  padding: 12px;
+}
+.cardTitle{ font-weight: 800; margin-bottom: 10px; }
+
+.formRow{ display:flex; gap: 10px; align-items:center; margin-top: 10px; }
+.input{
+  width:100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border:1px solid rgba(37,50,87,.65);
+  background: rgba(0,0,0,.20);
+  color: var(--text);
+  outline: none;
+  min-height: 42px;
+}
+.input::placeholder{ color: rgba(210,220,250,.55); }
+
+.seg{
+  display:flex;
+  border-radius: 12px;
+  overflow:hidden;
+  border: 1px solid rgba(37,50,87,.65);
+  background: rgba(0,0,0,.18);
+}
+.segBtn{
+  flex:1;
+  min-height: 42px;
+  border:0;
+  background: transparent;
+  color: rgba(221,230,255,.85);
+  cursor:pointer;
+  font-weight: 800;
+}
+.segOn{
+  background: rgba(255,255,255,.08);
+  color: rgba(246,247,255,.95);
+}
+
+.btn{
+  border:1px solid rgba(37,50,87,.65);
+  background: rgba(255,255,255,.06);
+  color: rgba(246,247,255,.95);
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 10px 12px;
+  cursor:pointer;
+  font-weight: 800;
+  transition: transform .12s ease, background .12s ease, opacity .12s ease;
+}
+.btn:hover{ background: rgba(255,255,255,.10); }
+.btn:active{ transform: scale(.98); }
+.btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+.btnPrimary{
+  background: rgba(96,170,255,.18);
+  border-color: rgba(96,170,255,.35);
+}
+.btnPrimary:hover{ background: rgba(96,170,255,.24); }
+
+.toast{
+  margin-top: 12px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border:1px solid rgba(37,50,87,.55);
+  background: rgba(0,0,0,.20);
+}
+.toast.good{ border-color: rgba(73,255,155,.35); }
+.toast.bad{ border-color: rgba(255,92,106,.35); }
+.toastDot{
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,.35);
+}
+.toast.good .toastDot{ background: rgba(73,255,155,.65); }
+.toast.bad .toastDot{ background: rgba(255,92,106,.65); }
+.toastText{ color: rgba(232,236,255,.92); font-size: 12px; }
+
+.boardTop{
+  display:flex;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.scoreCard, .roundCard{
+  flex:1;
+  border-radius: 16px;
+  border:1px solid rgba(37,50,87,.55);
+  background: rgba(15,23,48,.55);
+  padding: 12px;
+}
+.scoreLabel{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  color: rgba(210,220,250,.75);
+  font-size: 12px;
+}
+.scoreNum{
+  font-weight: 900;
+  font-size: 20px;
+  margin-top: 6px;
+}
+.roundSub{ color: rgba(210,220,250,.75); font-size: 12px; margin-top: 6px; }
+
+.badgeA,.badgeB{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 12px;
+}
+.badgeA{ background: rgba(73,255,155,.16); border:1px solid rgba(73,255,155,.35); color: var(--a); }
+.badgeB{ background: rgba(106,183,255,.16); border:1px solid rgba(106,183,255,.35); color: var(--b); }
+
+.boardWrap{ margin-top: 10px; }
+.boardEmpty{
+  border-radius: 18px;
+  border:1px dashed rgba(37,50,87,.70);
+  background: rgba(0,0,0,.14);
+  padding: 26px 18px;
+  text-align:center;
+}
+.emptyTitle{ font-weight: 900; }
+.emptySub{ margin-top: 6px; color: rgba(210,220,250,.75); font-size: 12px; }
+
+.boardGrid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tile{
+  height: 150px;
+  border-radius: 18px;
+  border:1px solid rgba(37,50,87,.60);
+  background: rgba(255,255,255,.04);
+  position: relative;
+  overflow:hidden;
+  user-select:none;
+}
+.tile.used{ opacity: .50; }
+.tile.chosen{ border-color: rgba(255,255,255,.25); }
+
+.tileInner{
+  width:100%;
+  height:100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform .6s ease;
+}
+.tile.reveal-1 .tileInner,
+.tile.reveal-2 .tileInner,
+.tile.reveal-3 .tileInner,
+.tile.reveal-4 .tileInner{
+  transform: rotateY(180deg);
+}
+.tileFace{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  padding: 12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.tileBack{
+  transform: rotateY(180deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  font-weight: 900;
+  letter-spacing: .4px;
+}
+.backGlow{
+  position:absolute;
+  inset:-60px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 60%);
+  filter: blur(10px);
+  animation: glow 1s ease-in-out infinite alternate;
+}
+@keyframes glow{
+  from{ opacity:.35; }
+  to{ opacity:.75; }
+}
+.backText{ position: relative; z-index: 1; }
+
+.tileTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.coord{ color: rgba(210,220,250,.65); font-size: 12px; }
+.stateTag{
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border:1px solid rgba(37,50,87,.60);
+  color: rgba(210,220,250,.75);
+}
+.tagNew{ background: rgba(255,255,255,.05); }
+.tagUsed{ background: rgba(0,0,0,.16); }
+
+.vals{ display:flex; flex-direction:column; gap: 10px; }
+.valLine{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.val{
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: .3px;
+}
+.pos{ color: rgba(73,255,155,.95); }
+.neg{ color: rgba(255,92,106,.95); }
+
+.hint{ color: rgba(210,220,250,.55); font-size: 11px; }
+
+.actions{
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border:1px solid rgba(37,50,87,.55);
+  background: rgba(15,23,48,.55);
+}
+.actTitle{ font-weight: 800; margin-bottom: 10px; }
+.btnRow{ display:flex; gap: 10px; }
+
+.modalBack{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index: 50;
+  padding: 18px;
+}
+.modal{
+  width: min(520px, 96vw);
+  border-radius: 18px;
+  border:1px solid rgba(37,50,87,.70);
+  background: rgba(15,23,48,.92);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.modalTitle{
+  font-weight: 900;
+  padding: 14px 16px;
+  border-bottom:1px solid rgba(37,50,87,.55);
+}
+.modalBody{ padding: 14px 16px; }
+.modalRow{ display:flex; align-items:center; gap: 10px; margin: 8px 0; }
+.modalWinner{ margin-top: 12px; font-weight: 900; font-size: 18px; text-align:center; }
+.modalHint{ margin-top: 6px; color: rgba(210,220,250,.75); font-size: 12px; text-align:center; }
+.modalActions{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  padding: 12px 16px 16px;
+  border-top:1px solid rgba(37,50,87,.55);
+}
+
+.gFooter{
+  width:min(1200px, 96vw);
+  margin: 14px auto 18px;
+  color: rgba(169,181,214,.85);
+  font-size: 12px;
+  text-align:center;
+}
+
+/* =========================
+   Mobile Adaptation (added)
+   ========================= */
+
+/* 竖屏手机优先：单列布局 + 更大的触控区域 + 棋盘正方形 */
+@media (max-width: 768px) {
+
+  /* 顶部栏：从横向改为纵向，避免挤压 */
+  .gTopbar{
+    position: static;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .gTitle{
+    font-size: 15px;
+  }
+  .gSub{
+    font-size: 12px;
+  }
+
+  /* pill 换行更紧凑 */
+  .gStatusPills{
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pill{
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  /* 主体：左右两栏 -> 单列 */
+  .gMain{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* 让棋盘优先显示（棋盘在上，房间/操作在下） */
+  .panelRight{ order: 1; }
+  .panelLeft{ order: 2; }
+
+  /* 面板内间距更紧凑 */
+  .panel{
+    padding: 12px;
+    border-radius: 16px;
+  }
+  .panelHeader{
+    margin-bottom: 10px;
+  }
+  .cardTitle{
+    font-size: 14px;
+  }
+
+  /* 棋盘：不再固定高度，改为正方形，自适应屏幕宽度 */
+  .boardWrap{
+    margin-top: 10px;
+  }
+  .boardGrid{
+    gap: 8px;
+  }
+  .tile{
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+  }
+
+  /* 数值字体用 clamp 自适应 */
+  .val{
+    font-size: clamp(14px, 4.6vw, 18px);
+  }
+  .coord{
+    font-size: 11px;
+  }
+  .stateTag{
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+
+  /* 操作区：按钮加大，垂直堆叠，避免误触 */
+  .actions{
+    padding: 12px;
+    border-radius: 16px;
+  }
+  .actTitle{
+    font-size: 14px;
+  }
+  .btnRow{
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn{
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+    padding: 11px 12px;
+    border-radius: 12px;
+  }
+
+  /* 表单区：按钮并排时容易挤，改为换行 */
+  .formRow{
+    flex-direction: column;
+    gap: 10px;
+  }
+  .seg{
+    width: 100%;
+  }
+  .segBtn{
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .input{
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  /* 顶部分数/回合区域更适合手机 */
+  .boardTop{
+    flex-direction: column;
+    gap: 10px;
+  }
+  .scoreNum{
+    font-size: 18px;
+  }
+
+  /* Toast/Modal：手机下宽度全屏化 */
+  .toast{
+    font-size: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+  .modal{
+    width: min(520px, 96vw);
+  }
+  .modalActions{
+    flex-direction: column;
+  }
+  .modalActions .btn{
+    width: 100%;
+  }
+
+  /* footer */
+  .gFooter{
+    width: min(1200px, 96vw);
+    font-size: 11px;
+    padding: 0 10px;
+  }
+}
+
+/* 更小屏（如 iPhone SE） */
+@media (max-width: 390px){
+  .boardGrid{ gap: 7px; }
+  .tile{ border-radius: 14px; }
+  .pill{ font-size: 11px; padding: 6px 9px; }
+  .btn{ font-size: 13px; }
+}
