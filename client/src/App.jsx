@@ -85,6 +85,7 @@ export default function App() {
     s.on("gameStart", (st) => {
       setGameOver(null);
       setLastChosen(null);
+      setRevealTick(0);
       setState(st);
       good("对局开始！");
     });
@@ -96,7 +97,7 @@ export default function App() {
 
     s.on("roundResult", (payload) => {
       setLastChosen(payload.chosen);
-      setRevealTick((x) => x + 1);
+      setRevealTick((x) => ((x % 4) + 1)); // CSS 只定义了 reveal-1~4，循环避免动画失效
       setState((prev) => ({
         ...(prev || {}),
         board: payload.board,
@@ -117,7 +118,10 @@ export default function App() {
     });
 
     s.on("gameOver", (payload) => {
+      setState((prev) => (prev ? { ...prev, picks: { A: null, B: null } } : prev));
+      setLastChosen(null);
       setGameOver(payload);
+      setRevealTick(0);
       good("对局结束！");
     });
 
@@ -128,10 +132,15 @@ export default function App() {
 
   async function onCreateRoom() {
     try {
-      const { roomId } = await createRoom();
-      setRoomId(roomId);
-      setJoinRoomId(roomId);
-      setToast({ type: "good", text: `房间已创建：${roomId}` });
+      const { roomId: rid } = await createRoom();
+      setRoomId(rid);
+      setJoinRoomId(rid);
+      setState(null);
+      setLastChosen(null);
+      setRevealTick(0);
+      setGameOver(null);
+      setToast({ type: "good", text: `房间已创建并已加入：${rid}` });
+      socketRef.current?.emit("joinRoom", { roomId: rid, team: myTeam });
     } catch (e) {
       setToast({ type: "bad", text: e.message || "创建房间失败" });
     }
@@ -141,6 +150,9 @@ export default function App() {
     const rid = (joinRoomId || "").trim().toUpperCase();
     if (!rid) return setToast({ type: "bad", text: "请输入房间号" });
     setRoomId(rid);
+    setGameOver(null);
+    setLastChosen(null);
+    setRevealTick(0);
     socketRef.current?.emit("joinRoom", { roomId: rid, team: myTeam });
     setToast({ type: "info", text: `加入房间 ${rid}，队伍 ${myTeam}...` });
   }
@@ -149,6 +161,16 @@ export default function App() {
     if (!roomId) return setToast({ type: "bad", text: "还没有房间号" });
     const ok = await copyText(roomId);
     setToast({ type: ok ? "good" : "bad", text: ok ? "房间号已复制" : "复制失败，请手动复制" });
+  }
+
+  function onRestart() {
+    if (!roomId) return setToast({ type: "bad", text: "还没有房间号" });
+    setGameOver(null);
+    setLastChosen(null);
+    setRevealTick(0);
+    setState((prev) => (prev ? { ...prev, picks: { A: null, B: null } } : prev));
+    socketRef.current?.emit("restartGame", { roomId });
+    setToast({ type: "info", text: "请求再战一局..." });
   }
 
   function pickRow(row) {
@@ -424,11 +446,11 @@ export default function App() {
               <div className="modalWinner">
                 {gameOver.winner === "DRAW" ? "平局" : gameOver.winner === "A" ? "A 获胜" : "B 获胜"}
               </div>
-              <div className="modalHint">你可以创建新房间开始下一局。</div>
+              <div className="modalHint">点击再战即可立刻开新局，或在左侧创建新房间。</div>
             </div>
             <div className="modalActions">
               <button className="btn" onClick={() => setGameOver(null)}>关闭</button>
-              <button className="btn btnPrimary" onClick={onCreateRoom}>新开一局</button>
+              <button className="btn btnPrimary" onClick={onRestart}>再战一局</button>
             </div>
           </div>
         </div>
