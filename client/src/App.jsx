@@ -345,7 +345,7 @@ export default function App() {
               </div>
 
               <div className="formRow joinRow">
-                <button className="btn btnGhost" onClick={openRoomList} disabled={!connected || inGame}>加入房间</button>
+                <button className="btn btnGhost" onClick={openRoomList} disabled={!connected || inGame}>房间列表</button>
               </div>
 
               <div className="formRow inputRow">
@@ -532,7 +532,7 @@ export default function App() {
       {roomListOpen && (
         <div className="modalBack">
           <div className="modal roomListModal">
-            <div className="modalTitle">加入房间</div>
+            <div className="modalTitle">房间列表</div>
             <div className="modalBody roomListBody">
               <div className="roomListActions">
                 <button className="btn" onClick={loadRoomList} disabled={roomsLoading}>

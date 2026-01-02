@@ -223,13 +223,22 @@ body{
 .btnPrimary:hover{ background: rgba(96,170,255,.24); }
 
 @media (min-width: 900px){
+  .actionsRow{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .actionsRow .btn{
     flex: 1 1 0;
     min-width: 0;
+    width: 100%;
+    white-space: nowrap;
+  }
+  .joinRow{
+    width: 100%;
   }
   .joinRow .btnGhost{
-    width: auto;
-    min-width: 200px;
+    width: 100%;
+    min-width: 0;
     padding-inline: 18px;
   }
   .inputRow .input{

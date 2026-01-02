@@ -517,6 +517,7 @@ io.on("connection", (socket) => {
       resetRoomAfterLeave(room);
       io.to(rid).emit("opponentLeft", { message: "对手已离开，房间已重置等待新玩家" });
       io.to(rid).emit("roomState", publicState(room));
+      io.to(rid).emit("waiting", { message: "等待另一位玩家加入..." });
     } else {
       resetRoomAfterLeave(room);
       rooms.delete(rid);
