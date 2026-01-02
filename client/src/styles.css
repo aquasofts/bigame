@@ -1,13 +1,16 @@
 /* ===== 原 styles.css（你上传的内容） ===== */
 :root{
   --bg0:#070b14;
-  --bg1:#0b1020;
+  --bg1:#0b0f1f;
   --text: rgba(238,242,255,.92);
   --muted: rgba(192,202,232,.75);
   --line: rgba(37,50,87,.55);
+  --line-strong: rgba(86,124,255,.45);
   --card: rgba(16,22,44,.62);
   --card2: rgba(18,26,52,.72);
+  --panel: rgba(12,16,34,.72);
   --shadow: 0 18px 60px rgba(0,0,0,.45);
+  --glow: 0 0 0 1px rgba(86,124,255,.32);
   --good: #49ff9b;
   --bad: #ff5c6a;
   --a: #49ff9b;
@@ -20,9 +23,9 @@ body{
   margin:0;
   color:var(--text);
   background:
-    radial-gradient(1000px 600px at 15% -10%, rgba(106,168,255,.18), transparent 60%),
-    radial-gradient(900px 600px at 90% 20%, rgba(169,123,255,.16), transparent 55%),
-    radial-gradient(800px 500px at 50% 120%, rgba(76,255,181,.10), transparent 55%),
+    radial-gradient(900px 600px at 15% -10%, rgba(106,168,255,.20), transparent 60%),
+    radial-gradient(900px 650px at 90% 20%, rgba(169,123,255,.20), transparent 55%),
+    radial-gradient(800px 520px at 50% 120%, rgba(76,255,181,.10), transparent 55%),
     linear-gradient(180deg, var(--bg0), var(--bg1));
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei", Arial;
 }
@@ -34,9 +37,9 @@ body{
   width: min(1200px, 96vw);
   margin: 14px auto 0;
   padding: 12px 14px;
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: rgba(14,20,40,.75);
+  border-radius: 20px;
+  border: 1px solid rgba(86,124,255,.25);
+  background: linear-gradient(135deg, rgba(18,26,52,.85), rgba(12,16,34,.75));
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   position: sticky;
@@ -45,6 +48,14 @@ body{
 }
 
 .gBrand{ display:flex; flex-direction:column; gap:4px; }
+.gLogo{
+  width: 38px; height: 38px;
+  display:grid; place-items:center;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border:1px solid rgba(86,124,255,.25);
+  margin-bottom: 4px;
+}
 .gTitle{ font-weight: 900; letter-spacing: .3px; font-size: 16px; }
 .gSub{ color: var(--muted); font-size: 12px; }
 
@@ -55,14 +66,22 @@ body{
   color: rgba(214,221,246,.9);
   padding: 8px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(37,50,87,.55);
-  background: rgba(10,14,28,.55);
+  border: 1px solid rgba(37,50,87,.65);
+  background: rgba(10,14,28,.70);
+  box-shadow: var(--glow);
 }
 .pill b{ color: rgba(246,247,255,.95); font-weight: 800; }
 .pillBtn{ cursor:pointer; }
 .pillBtn:disabled{ opacity:.55; cursor:not-allowed; }
 .ok{ color: var(--good); }
 .no{ color: var(--bad); }
+.pillOk .dot{ background: var(--good); }
+.pillBad .dot{ background: var(--bad); }
+.dot{
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,.65);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.05);
+}
 
 .gMain{
   width: min(1200px, 96vw);
@@ -73,9 +92,9 @@ body{
 }
 
 .panel{
-  border-radius: 18px;
-  border:1px solid rgba(37,50,87,.62);
-  background: rgba(12,16,34,.55);
+  border-radius: 20px;
+  border:1px solid rgba(86,124,255,.30);
+  background: linear-gradient(180deg, rgba(14,18,38,.85), rgba(10,14,28,.75));
   box-shadow: var(--shadow);
   padding: 14px;
   overflow:hidden;
@@ -83,14 +102,53 @@ body{
 .panelHeader{ margin-bottom: 12px; }
 .panelTitle{ font-weight: 900; letter-spacing:.2px; }
 .panelSub{ color: var(--muted); font-size: 12px; margin-top: 4px; }
+.panelStack{ display:flex; flex-direction:column; gap: 12px; }
 
 .card{
   border-radius: 16px;
-  border:1px solid rgba(37,50,87,.55);
-  background: rgba(15,23,48,.55);
+  border:1px solid rgba(37,50,87,.70);
+  background: rgba(10,14,28,.65);
   padding: 12px;
+  box-shadow: var(--glow);
 }
 .cardTitle{ font-weight: 800; margin-bottom: 10px; }
+.cardSection{ background: linear-gradient(180deg, rgba(15,23,48,.75), rgba(12,16,34,.70)); }
+.toastCard{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  border:1px solid rgba(37,50,87,.70);
+  background: rgba(0,0,0,.22);
+}
+.toastCard.good{ border-color: rgba(73,255,155,.35); }
+.toastCard.bad{ border-color: rgba(255,92,106,.35); }
+.heroCard{
+  border:1px solid rgba(86,124,255,.35);
+  background: linear-gradient(180deg, rgba(18,26,52,.68), rgba(12,16,34,.72));
+}
+.boardCard{
+  border:1px solid rgba(37,50,87,.75);
+  background: rgba(8,12,24,.78);
+}
+
+.players{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+.playerBox{
+  border:1px solid rgba(37,50,87,.65);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,.20);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+}
+.playerBox.ready{
+  border-color: rgba(73,255,155,.35);
+  box-shadow: 0 0 0 1px rgba(73,255,155,.15);
+}
+.pHead{ display:flex; align-items:center; gap: 8px; font-weight: 800; }
+.pSub{ margin-top: 4px; color: var(--muted); font-size: 12px; }
 
 .formRow{ display:flex; gap: 10px; align-items:center; margin-top: 10px; }
 .input{
@@ -178,7 +236,8 @@ body{
   flex:1;
   border-radius: 16px;
   border:1px solid rgba(37,50,87,.55);
-  background: rgba(15,23,48,.55);
+  background: rgba(12,18,38,.62);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
   padding: 12px;
 }
 .scoreLabel{
@@ -194,6 +253,36 @@ body{
   margin-top: 6px;
 }
 .roundSub{ color: rgba(210,220,250,.75); font-size: 12px; margin-top: 6px; }
+.roundTitle{ font-weight: 800; letter-spacing: .2px; }
+.roundValue{ font-weight: 900; font-size: 18px; margin-top: 6px; }
+.pickRow{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.pickPill{
+  flex:1;
+  min-width: 120px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  border:1px solid rgba(37,50,87,.65);
+  background: rgba(0,0,0,.18);
+  font-size: 13px;
+}
+.progress{
+  width:100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  overflow:hidden;
+  margin-top: 8px;
+}
+.progress .bar{
+  height:100%;
+  background: linear-gradient(90deg, rgba(73,255,155,.55), rgba(106,183,255,.65));
+  border-radius: 999px;
+}
 
 .badgeA,.badgeB{
   display:inline-flex;
@@ -209,6 +298,7 @@ body{
 .badgeB{ background: rgba(106,183,255,.16); border:1px solid rgba(106,183,255,.35); color: var(--b); }
 
 .boardWrap{ margin-top: 10px; }
+.boardCard .boardWrap{ margin:0; padding: 6px; }
 .boardEmpty{
   border-radius: 18px;
   border:1px dashed rgba(37,50,87,.70);
@@ -229,10 +319,11 @@ body{
   height: 150px;
   border-radius: 18px;
   border:1px solid rgba(37,50,87,.60);
-  background: rgba(255,255,255,.04);
+  background: linear-gradient(180deg, rgba(17,23,44,.75), rgba(12,16,34,.78));
   position: relative;
   overflow:hidden;
   user-select:none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
 }
 .tile.used{ opacity: .50; }
 .tile.chosen{ border-color: rgba(255,255,255,.25); }
@@ -315,8 +406,9 @@ body{
   margin-top: 12px;
   padding: 14px;
   border-radius: 18px;
-  border:1px solid rgba(37,50,87,.55);
-  background: rgba(15,23,48,.55);
+  border:1px solid rgba(37,50,87,.65);
+  background: rgba(15,23,48,.60);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
 }
 .actTitle{ font-weight: 800; margin-bottom: 10px; }
 .btnRow{ display:flex; gap: 10px; }

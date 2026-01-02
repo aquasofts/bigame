@@ -250,181 +250,189 @@ export default function App() {
             <div className="panelHint">创建 / 加入，然后开始对局</div>
           </div>
 
-          <div className="card">
-            <div className="cardTitle">操作</div>
+          <div className="panelStack">
+            <div className="card cardSection">
+              <div className="cardTitle">操作</div>
 
-            <div className="formRow">
-              <button className="btn btnPrimary" onClick={onCreateRoom}>创建新房间</button>
-              <button className="btn" onClick={onShareRoom} disabled={!roomId}>分享（复制）</button>
-            </div>
-
-            <div className="formRow">
-              <input
-                className="input"
-                value={joinRoomId}
-                onChange={(e) => setJoinRoomId(e.target.value)}
-                placeholder="输入房间号（如 ABC123）"
-              />
-            </div>
-
-            <div className="formRow">
-              <div className="seg">
-                <button className={`segBtn ${team === "A" ? "segOn" : ""}`} onClick={() => setTeam("A")} type="button">
-                  A（选行）
-                </button>
-                <button className={`segBtn ${team === "B" ? "segOn" : ""}`} onClick={() => setTeam("B")} type="button">
-                  B（选列）
-                </button>
+              <div className="formRow">
+                <button className="btn btnPrimary" onClick={onCreateRoom}>创建新房间</button>
+                <button className="btn" onClick={onShareRoom} disabled={!roomId}>分享（复制）</button>
               </div>
-              <button className="btn" onClick={onJoin} disabled={!connected}>加入</button>
-            </div>
-          </div>
 
-          <div className={`toast ${toast.type}`}>
-            <div className="toastDot" />
-            <div className="toastText">{toast.text}</div>
-          </div>
-
-          <div className="card">
-            <div className="cardTitle">玩家</div>
-            <div className="players">
-              <div className={`playerBox ${safeState.players?.A ? "ready" : ""}`}>
-                <div className="pHead"><span className="badgeA">A</span> <b>选行</b></div>
-                <div className="pSub">{safeState.players?.A ? "已加入" : "未加入"}</div>
+              <div className="formRow">
+                <input
+                  className="input"
+                  value={joinRoomId}
+                  onChange={(e) => setJoinRoomId(e.target.value)}
+                  placeholder="输入房间号（如 ABC123）"
+                />
               </div>
-              <div className={`playerBox ${safeState.players?.B ? "ready" : ""}`}>
-                <div className="pHead"><span className="badgeB">B</span> <b>选列</b></div>
-                <div className="pSub">{safeState.players?.B ? "已加入" : "未加入"}</div>
+
+              <div className="formRow">
+                <div className="seg">
+                  <button className={`segBtn ${team === "A" ? "segOn" : ""}`} onClick={() => setTeam("A")} type="button">
+                    A（选行）
+                  </button>
+                  <button className={`segBtn ${team === "B" ? "segOn" : ""}`} onClick={() => setTeam("B")} type="button">
+                    B（选列）
+                  </button>
+                </div>
+                <button className="btn" onClick={onJoin} disabled={!connected}>加入</button>
+              </div>
+            </div>
+
+            <div className={`card toastCard ${toast.type}`}>
+              <div className="toastDot" />
+              <div className="toastText">{toast.text}</div>
+            </div>
+
+            <div className="card cardSection">
+              <div className="cardTitle">玩家</div>
+              <div className="players">
+                <div className={`playerBox ${safeState.players?.A ? "ready" : ""}`}>
+                  <div className="pHead"><span className="badgeA">A</span> <b>选行</b></div>
+                  <div className="pSub">{safeState.players?.A ? "已加入" : "未加入"}</div>
+                </div>
+                <div className={`playerBox ${safeState.players?.B ? "ready" : ""}`}>
+                  <div className="pHead"><span className="badgeB">B</span> <b>选列</b></div>
+                  <div className="pSub">{safeState.players?.B ? "已加入" : "未加入"}</div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         <section className="panel panelRight">
-          <div className="boardTop">
-            <div className="scoreCard">
-              <div className="scoreLine"><span className="badgeA">A</span><span className="scoreNum">{scoreA}</span></div>
-              <div className="scoreLine"><span className="badgeB">B</span><span className="scoreNum">{scoreB}</span></div>
+          <div className="panelStack">
+            <div className="card heroCard">
+              <div className="boardTop">
+                <div className="scoreCard">
+                  <div className="scoreLine"><span className="badgeA">A</span><span className="scoreNum">{scoreA}</span></div>
+                  <div className="scoreLine"><span className="badgeB">B</span><span className="scoreNum">{scoreB}</span></div>
+                </div>
+
+                <div className="roundCard">
+                  <div className="roundTitle">回合</div>
+                  <div className="roundValue">{round ? `${round}/9` : "—"}</div>
+                  <div className="progress"><div className="bar" style={{ width: `${progress}%` }} /></div>
+
+                  <div className="pickRow">
+                    <div className="pickPill">
+                      我方：<b>{myTeam === "A"
+                        ? safeState.picks?.A !== null ? `行 ${safeState.picks.A}` : "未选"
+                        : safeState.picks?.B !== null ? `列 ${safeState.picks.B}` : "未选"}</b>
+                    </div>
+                    <div className="pickPill">
+                      对手：<b>{myTeam === "A"
+                        ? safeState.picks?.B !== null ? `列 ${safeState.picks.B}` : "未选"
+                        : safeState.picks?.A !== null ? `行 ${safeState.picks.A}` : "未选"}</b>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="roundCard">
-              <div className="roundTitle">回合</div>
-              <div className="roundValue">{round ? `${round}/9` : "—"}</div>
-              <div className="progress"><div className="bar" style={{ width: `${progress}%` }} /></div>
+            <div className="card boardCard">
+              <div className="boardWrap">
+                {!bothJoined && (
+                  <div className="boardEmpty">
+                    <div className="emptyTitle">等待玩家</div>
+                    <div className="emptySub">双方加入后自动开局</div>
+                  </div>
+                )}
 
-              <div className="pickRow">
-                <div className="pickPill">
-                  我方：<b>{myTeam === "A"
-                    ? safeState.picks?.A !== null ? `行 ${safeState.picks.A}` : "未选"
-                    : safeState.picks?.B !== null ? `列 ${safeState.picks.B}` : "未选"}</b>
-                </div>
-                <div className="pickPill">
-                  对手：<b>{myTeam === "A"
-                    ? safeState.picks?.B !== null ? `列 ${safeState.picks.B}` : "未选"
-                    : safeState.picks?.A !== null ? `行 ${safeState.picks.A}` : "未选"}</b>
-                </div>
-              </div>
-            </div>
-          </div>
+                {bothJoined && !board && (
+                  <div className="boardEmpty">
+                    <div className="emptyTitle">发牌中…</div>
+                    <div className="emptySub">服务器生成随机棋盘</div>
+                  </div>
+                )}
 
-          <div className="boardWrap">
-            {!bothJoined && (
-              <div className="boardEmpty">
-                <div className="emptyTitle">等待玩家</div>
-                <div className="emptySub">双方加入后自动开局</div>
-              </div>
-            )}
+                {board && (
+                  <>
+                    <div className="boardGrid">
+                      {Array.from({ length: 3 }).map((_, ri) =>
+                        Array.from({ length: 3 }).map((__, ci) => {
+                          const cell = board?.[ri]?.[ci] || { a: 0, b: 0, used: false };
+                          const used = !!cell.used;
+                          const chosen = lastChosen && lastChosen.row === ri && lastChosen.col === ci;
+                          const reveal = chosen ? `reveal-${revealTick}` : "";
+                          const cls = `tile ${used ? "used" : ""} ${chosen ? "chosen" : ""} ${reveal}`;
 
-            {bothJoined && !board && (
-              <div className="boardEmpty">
-                <div className="emptyTitle">发牌中…</div>
-                <div className="emptySub">服务器生成随机棋盘</div>
-              </div>
-            )}
-
-            {board && (
-              <>
-                <div className="boardGrid">
-                  {Array.from({ length: 3 }).map((_, ri) =>
-                    Array.from({ length: 3 }).map((__, ci) => {
-                      const cell = board?.[ri]?.[ci] || { a: 0, b: 0, used: false };
-                      const used = !!cell.used;
-                      const chosen = lastChosen && lastChosen.row === ri && lastChosen.col === ci;
-                      const reveal = chosen ? `reveal-${revealTick}` : "";
-                      const cls = `tile ${used ? "used" : ""} ${chosen ? "chosen" : ""} ${reveal}`;
-
-                      return (
-                        <div key={`${ri}-${ci}`} className={cls}>
-                          <div className="tileInner">
-                            <div className="tileFace tileFront">
-                              <div className="tileTop">
-                                <span className="coord">{ri},{ci}</span>
-                                <span className={`stateTag ${used ? "tagUsed" : "tagNew"}`}>{used ? "已用" : "可用"}</span>
-                              </div>
-                              <div className="vals">
-                                <div className="valLine">
-                                  <span className="badgeA">A</span>
-                                  <span className={`val ${cell.a >= 0 ? "pos" : "neg"}`}>{cell.a >= 0 ? `+${cell.a}` : `${cell.a}`}</span>
+                          return (
+                            <div key={`${ri}-${ci}`} className={cls}>
+                              <div className="tileInner">
+                                <div className="tileFace tileFront">
+                                  <div className="tileTop">
+                                    <span className="coord">{ri},{ci}</span>
+                                    <span className={`stateTag ${used ? "tagUsed" : "tagNew"}`}>{used ? "已用" : "可用"}</span>
+                                  </div>
+                                  <div className="vals">
+                                    <div className="valLine">
+                                      <span className="badgeA">A</span>
+                                      <span className={`val ${cell.a >= 0 ? "pos" : "neg"}`}>{cell.a >= 0 ? `+${cell.a}` : `${cell.a}`}</span>
+                                    </div>
+                                    <div className="valLine">
+                                      <span className="badgeB">B</span>
+                                      <span className={`val ${cell.b >= 0 ? "pos" : "neg"}`}>{cell.b >= 0 ? `+${cell.b}` : `${cell.b}`}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="valLine">
-                                  <span className="badgeB">B</span>
-                                  <span className={`val ${cell.b >= 0 ? "pos" : "neg"}`}>{cell.b >= 0 ? `+${cell.b}` : `${cell.b}`}</span>
+
+                                <div className="tileFace tileBack">
+                                  <div className="cardBack">
+                                    <div className="backMark">CARD</div>
+                                    <div className="backLine" />
+                                    <div className="backMini">3×3 MATRIX</div>
+                                  </div>
                                 </div>
                               </div>
+                              <div className="flash" />
                             </div>
+                          );
+                        })
+                      )}
+                    </div>
 
-                            <div className="tileFace tileBack">
-                              <div className="cardBack">
-                                <div className="backMark">CARD</div>
-                                <div className="backLine" />
-                                <div className="backMini">3×3 MATRIX</div>
-                              </div>
-                            </div>
+                    <div className="actions">
+                      {myTeam === "A" ? (
+                        <>
+                          <div className="actTitle">你的操作：<b>选择行</b></div>
+                          <div className="btnRow">
+                            {[0, 1, 2].map((r) => (
+                              <button
+                                key={r}
+                                className="btn btnPrimary"
+                                onClick={() => pickRow(r)}
+                                disabled={myPickLocked || !!gameOver || disableRow(r)}
+                              >
+                                选第 {r + 1} 行
+                              </button>
+                            ))}
                           </div>
-                          <div className="flash" />
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <div className="actions">
-                  {myTeam === "A" ? (
-                    <>
-                      <div className="actTitle">你的操作：<b>选择行</b></div>
-                      <div className="btnRow">
-                        {[0, 1, 2].map((r) => (
-                          <button
-                            key={r}
-                            className="btn btnPrimary"
-                            onClick={() => pickRow(r)}
-                            disabled={myPickLocked || !!gameOver || disableRow(r)}
-                          >
-                            选第 {r + 1} 行
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="actTitle">你的操作：<b>选择列</b></div>
-                      <div className="btnRow">
-                        {[0, 1, 2].map((c) => (
-                          <button
-                            key={c}
-                            className="btn btnPrimary"
-                            onClick={() => pickCol(c)}
-                            disabled={myPickLocked || !!gameOver || disableCol(c)}
-                          >
-                            选第 {c + 1} 列
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
+                        </>
+                      ) : (
+                        <>
+                          <div className="actTitle">你的操作：<b>选择列</b></div>
+                          <div className="btnRow">
+                            {[0, 1, 2].map((c) => (
+                              <button
+                                key={c}
+                                className="btn btnPrimary"
+                                onClick={() => pickCol(c)}
+                                disabled={myPickLocked || !!gameOver || disableCol(c)}
+                              >
+                                选第 {c + 1} 列
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </section>
       </main>
