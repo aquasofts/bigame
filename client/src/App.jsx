@@ -196,7 +196,7 @@ export default function App() {
   const pickedRow = safeState.picks?.A ?? null;
   const pickedCol = safeState.picks?.B ?? null;
   const myPickValue = myTeam === "A" ? pickedRow : pickedCol;
-  const myPickLabel = myPickValue !== null ? `${myTeam === "A" ? "行" : "列"} ${myPickValue}` : "未选";
+  const myPickLabel = myPickValue !== null ? `${myTeam === "A" ? "行" : "列"} ${myPickValue + 1}` : "未选";
   const opponentPickValue = myTeam === "A" ? pickedCol : pickedRow;
   const opponentPickLabel = opponentPickValue !== null ? "已选择" : "未选";
 
