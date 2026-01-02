@@ -557,16 +557,19 @@ io.on("connection", (socket) => {
 
     // game over after round 9
     if (room.round >= 9) {
-      room.active = false;
+      const finalScores = { ...room.scores };
       const winner =
-        room.scores.A === room.scores.B ? "DRAW" : room.scores.A > room.scores.B ? "A" : "B";
+        finalScores.A === finalScores.B ? "DRAW" : finalScores.A > finalScores.B ? "A" : "B";
 
-      io.to(rid).emit("gameOver", {
-        finalScores: { ...room.scores },
-        winner,
-      });
+      setTimeout(() => {
+        room.active = false;
+        resetPicks(room);
 
-      resetPicks(room);
+        io.to(rid).emit("gameOver", {
+          finalScores,
+          winner,
+        });
+      }, ROUND_DELAY_MS);
       return;
     }
 
