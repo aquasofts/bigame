@@ -198,11 +198,16 @@ body{
   cursor:pointer;
   font-weight: 800;
   transition: transform .12s ease, background .12s ease, opacity .12s ease;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.3;
+  text-align: center;
+  word-break: break-word;
+  overflow: hidden;
 }
 .btn:hover{ background: rgba(255,255,255,.10); }
 .btn:active{ transform: scale(.98); }
 .btn:disabled{ opacity:.55; cursor:not-allowed; }
+.actionsRow .btn{ min-width: 0; }
 
 .btnGhost{
   width: 100%;
@@ -477,13 +482,20 @@ body{
   background: rgba(15,23,48,.92);
   box-shadow: var(--shadow);
   overflow:hidden;
+  max-height: 90vh;
+  display:flex;
+  flex-direction:column;
 }
 .modalTitle{
   font-weight: 900;
   padding: 14px 16px;
   border-bottom:1px solid rgba(37,50,87,.55);
 }
-.modalBody{ padding: 14px 16px; }
+.modalBody{
+  padding: 14px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
 .modalRow{ display:flex; align-items:center; gap: 10px; margin: 8px 0; }
 .modalWinner{ margin-top: 12px; font-weight: 900; font-size: 18px; text-align:center; }
 .modalHint{ margin-top: 6px; color: rgba(210,220,250,.75); font-size: 12px; text-align:center; }
@@ -500,6 +512,15 @@ body{
   gap: 10px;
   margin-bottom: 12px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  padding-bottom: 10px;
+  background: linear-gradient(180deg, rgba(15,23,48,.94), rgba(15,23,48,.92) 70%, transparent);
+}
+.roomListBody{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
 }
 .roomList{
   display:flex;

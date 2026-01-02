@@ -245,6 +245,20 @@ function resetPicks(room) {
   room.picks = { A: null, B: null };
 }
 
+function resetRoomAfterLeave(room) {
+  room.active = false;
+  room.round = 0;
+  room.scores = { A: 0, B: 0 };
+  resetPicks(room);
+  room.board = null;
+  if (room.offlineSince) {
+    room.offlineSince.A = null;
+    room.offlineSince.B = null;
+  }
+  clearDisconnectTimer(room, "A");
+  clearDisconnectTimer(room, "B");
+}
+
 function availableTeam(room) {
   const hasA = !!room.players.A;
   const hasB = !!room.players.B;
@@ -259,11 +273,16 @@ function bothPicked(room) {
 
 function clearRoomIfEmpty(room) {
   if (room.players.A || room.players.B) return;
-  room.active = false;
-  room.board = null;
-  resetPicks(room);
-  clearDisconnectTimer(room, "A");
-  clearDisconnectTimer(room, "B");
+  resetRoomAfterLeave(room);
+  room.round = 0;
+}
+
+function cleanupRoomAfterDeparture(roomId, room) {
+  if (room.players.A || room.players.B) {
+    resetRoomAfterLeave(room);
+    return;
+  }
+  rooms.delete(roomId);
 }
 
 function initDisconnectTracking(room) {
@@ -326,14 +345,12 @@ function detachFromOtherRooms(socket, keepRoomId) {
       if (room.offlineSince) room.offlineSince[team] = null;
     });
 
-    room.active = false;
-    room.board = null;
-    resetPicks(room);
+    resetRoomAfterLeave(room);
     socket.leave(rid);
 
     io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
     io.to(rid).emit("roomState", publicState(room));
-    clearRoomIfEmpty(room);
+    cleanupRoomAfterDeparture(rid, room);
   }
 }
 
@@ -493,13 +510,18 @@ io.on("connection", (socket) => {
       if (room.offlineSince) room.offlineSince[team] = null;
     });
 
-    room.active = false;
-    resetPicks(room);
-    room.board = null;
-
     socket.leave(rid);
-    io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
-    io.to(rid).emit("roomState", publicState(room));
+
+    const hasPlayers = !!room.players.A || !!room.players.B;
+    if (hasPlayers) {
+      resetRoomAfterLeave(room);
+      io.to(rid).emit("opponentLeft", { message: "对手已离开，房间已重置等待新玩家" });
+      io.to(rid).emit("roomState", publicState(room));
+    } else {
+      resetRoomAfterLeave(room);
+      rooms.delete(rid);
+    }
+
     socket.emit("roomState", publicState(room));
   });
 
