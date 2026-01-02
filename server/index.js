@@ -9,6 +9,7 @@ const cors = require("cors");
 const { Server } = require("socket.io");
 
 const PORT = process.env.PORT || 3000;
+const DISCONNECT_GRACE_MS = Number(process.env.DISCONNECT_GRACE_MS || 60_000);
 
 // Comma-separated list. Example:
 // ALLOW_ORIGINS="http://8.209.231.192,http://8.209.231.192:80,http://localhost:5173"
@@ -240,12 +241,30 @@ function bothPicked(room) {
   return room.picks.A !== null && room.picks.B !== null;
 }
 
+function initDisconnectTracking(room) {
+  room.offlineSince = { A: null, B: null };
+  room.disconnectTimers = { A: null, B: null };
+}
+
+function clearDisconnectTimer(room, team) {
+  if (!room.disconnectTimers) return;
+  if (room.disconnectTimers[team]) {
+    clearTimeout(room.disconnectTimers[team]);
+    room.disconnectTimers[team] = null;
+  }
+  if (room.offlineSince) {
+    room.offlineSince[team] = null;
+  }
+}
+
 function startGame(room) {
   room.active = true;
   room.round = 1;
   room.scores = { A: 0, B: 0 };
   resetPicks(room);
   room.board = genFairBoard(room.scores); // ✅ round1 board
+  clearDisconnectTimer(room, "A");
+  clearDisconnectTimer(room, "B");
 }
 
 function resolveRound(room) {
@@ -281,6 +300,8 @@ app.post("/api/rooms", (req, res) => {
     board: null,
     active: false,
   });
+
+  initDisconnectTracking(rooms.get(roomId));
 
   res.json({ roomId });
 });
@@ -320,6 +341,7 @@ io.on("connection", (socket) => {
       if (room.players[other] === socket.id) room.players[other] = null;
 
       room.players[team] = socket.id;
+      clearDisconnectTimer(room, team);
       socket.join(rid);
 
       io.to(rid).emit("roomState", publicState(room));
@@ -427,24 +449,34 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     for (const [rid, room] of rooms.entries()) {
-      let changed = false;
+      const disconnectedTeams = [];
 
-      if (room.players.A === socket.id) {
-        room.players.A = null;
-        changed = true;
-      }
-      if (room.players.B === socket.id) {
-        room.players.B = null;
-        changed = true;
-      }
+      if (room.players.A === socket.id) disconnectedTeams.push("A");
+      if (room.players.B === socket.id) disconnectedTeams.push("B");
 
-      if (changed) {
-        room.active = false;
-        resetPicks(room);
-        room.board = null;
+      if (disconnectedTeams.length) {
+        disconnectedTeams.forEach((team) => {
+          room.players[team] = null;
+          clearDisconnectTimer(room, team);
 
-        io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
+          const offlineAt = Date.now();
+          room.offlineSince[team] = offlineAt;
+          room.disconnectTimers[team] = setTimeout(() => {
+            if (room.offlineSince[team] !== offlineAt) return;
+
+            room.active = false;
+            resetPicks(room);
+            room.board = null;
+            room.disconnectTimers[team] = null;
+            room.offlineSince[team] = null;
+
+            io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
+            io.to(rid).emit("roomState", publicState(room));
+          }, DISCONNECT_GRACE_MS);
+        });
+
         io.to(rid).emit("roomState", publicState(room));
+        io.to(rid).emit("opponentDisconnected", { message: "对手断线，等待 1 分钟内重连..." });
       }
     }
   });
