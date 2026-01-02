@@ -252,9 +252,11 @@ export default function App() {
   }
 
   // ---- 兜底：把 state 拆出来都给默认值，避免 render 报错白屏 ----
-  const safeState = state || { players: { A: null, B: null }, picks: { A: null, B: null }, scores: { A: 0, B: 0 }, round: 0, board: null };
+  const safeState =
+    state || { players: { A: null, B: null }, picks: { A: null, B: null }, scores: { A: 0, B: 0 }, round: 0, board: null, active: false };
   const board = safeState.board;
   const bothJoined = !!safeState.players?.A && !!safeState.players?.B;
+  const inGame = !!safeState.active;
 
   const myPickLocked =
     (myTeam === "A" && safeState.picks?.A !== null) ||
@@ -273,7 +275,7 @@ export default function App() {
   const opponentPickValue = myTeam === "A" ? pickedCol : pickedRow;
   const opponentPickLabel = opponentPickValue !== null ? "已选择" : "未选";
   const createCooldownLeft = Math.max(0, Math.ceil((createCooldownUntil - Date.now()) / 1000));
-  const createDisabled = creatingRoom || createCooldownLeft > 0;
+  const createDisabled = creatingRoom || createCooldownLeft > 0 || inGame;
   const createBtnLabel = createCooldownLeft > 0 ? `创建新房间（${createCooldownLeft}s）` : "创建新房间";
 
   const disableRow = (r) => {
@@ -338,12 +340,12 @@ export default function App() {
                 <button className="btn btnPrimary" onClick={onCreateRoom} disabled={!connected || createDisabled}>
                   {createBtnLabel}
                 </button>
-                <button className="btn" onClick={onShareRoom} disabled={!roomId}>分享（复制）</button>
+                <button className="btn" onClick={onShareRoom} disabled={!roomId || inGame}>分享（复制）</button>
                 <button className="btn btnGhost" onClick={onLeaveRoom} disabled={!roomId}>退出房间</button>
               </div>
 
               <div className="formRow joinRow">
-                <button className="btn btnGhost" onClick={openRoomList} disabled={!connected}>加入房间</button>
+                <button className="btn btnGhost" onClick={openRoomList} disabled={!connected || inGame}>加入房间</button>
               </div>
 
               <div className="formRow inputRow">
@@ -352,19 +354,20 @@ export default function App() {
                   value={joinRoomId}
                   onChange={(e) => setJoinRoomId(e.target.value)}
                   placeholder="输入房间号（如 ABC123）"
+                  disabled={inGame}
                 />
               </div>
 
               <div className="formRow teamRow">
                 <div className="seg">
-                  <button className={`segBtn ${team === "A" ? "segOn" : ""}`} onClick={() => setTeam("A")} type="button">
+                  <button className={`segBtn ${team === "A" ? "segOn" : ""}`} onClick={() => setTeam("A")} type="button" disabled={inGame}>
                     A（选行）
                   </button>
-                  <button className={`segBtn ${team === "B" ? "segOn" : ""}`} onClick={() => setTeam("B")} type="button">
+                  <button className={`segBtn ${team === "B" ? "segOn" : ""}`} onClick={() => setTeam("B")} type="button" disabled={inGame}>
                     B（选列）
                   </button>
                 </div>
-                <button className="btn" onClick={onJoin} disabled={!connected}>加入</button>
+                <button className="btn" onClick={onJoin} disabled={!connected || inGame}>加入</button>
               </div>
             </div>
 
