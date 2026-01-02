@@ -269,6 +269,7 @@ function resetRoomAfterLeave(room) {
   room.scores = { A: 0, B: 0 };
   resetPicks(room);
   room.board = null;
+  room.history = [];
   if (room.offlineSince) {
     room.offlineSince.A = null;
     room.offlineSince.B = null;
@@ -323,6 +324,7 @@ function startGame(room) {
   room.active = true;
   room.round = 1;
   room.scores = { A: 0, B: 0 };
+  room.history = [];
   resetPicks(room);
   room.board = genFairBoard(room.scores); // ✅ round1 board
   clearDisconnectTimer(room, "A");
@@ -397,6 +399,7 @@ app.post("/api/rooms", (req, res) => {
     picks: { A: null, B: null },
     board: null,
     active: false,
+    history: [],
   });
 
   initDisconnectTracking(rooms.get(roomId));
@@ -567,6 +570,17 @@ io.on("connection", (socket) => {
 
   function finishRound(rid, room) {
     const result = resolveRound(room);
+    const boardSnapshot = (room.board || []).map((row) =>
+      row.map((cell) => ({ ...cell }))
+    );
+    if (!Array.isArray(room.history)) room.history = [];
+    room.history.push({
+      round: room.round,
+      board: boardSnapshot,
+      picks: { ...room.picks },
+      delta: { ...result.delta },
+      scoresAfter: { ...room.scores },
+    });
 
     // send result for animation
     io.to(rid).emit("roundResult", {
@@ -588,6 +602,7 @@ io.on("connection", (socket) => {
         io.to(rid).emit("gameOver", {
           finalScores,
           winner,
+          history: room.history,
         });
       }, ROUND_DELAY_MS);
       return;
