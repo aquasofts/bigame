@@ -347,6 +347,25 @@ io.on("connection", (socket) => {
     if (bothPicked(room)) finishRound(rid, room);
   });
 
+  socket.on("restartGame", ({ roomId }) => {
+    const rid = String(roomId || "").trim().toUpperCase();
+    const room = rooms.get(rid);
+    if (!room) return socket.emit("errorMsg", { message: "房间不存在" });
+
+    const isPlayer = room.players.A === socket.id || room.players.B === socket.id;
+    if (!isPlayer) return socket.emit("errorMsg", { message: "你不在这个房间" });
+
+    if (!room.players.A || !room.players.B) {
+      return socket.emit("errorMsg", { message: "双方都在房间后才能再战" });
+    }
+    if (room.active) {
+      return socket.emit("errorMsg", { message: "当前对局尚未结束" });
+    }
+
+    startGame(room);
+    io.to(rid).emit("gameStart", publicState(room));
+  });
+
   function finishRound(rid, room) {
     const result = resolveRound(room);
 
