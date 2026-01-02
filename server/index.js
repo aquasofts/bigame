@@ -97,6 +97,8 @@ function scoreBoard(board) {
   const rowSumA = [0, 0, 0];
   const colSumB = [0, 0, 0];
   let extremePenalty = 0;
+  let rowWorstA = [Infinity, Infinity, Infinity];
+  let colWorstB = [Infinity, Infinity, Infinity];
 
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
@@ -104,6 +106,8 @@ function scoreBoard(board) {
       const b = board[r][c].b;
       rowSumA[r] += a;
       colSumB[c] += b;
+      rowWorstA[r] = Math.min(rowWorstA[r], a);
+      colWorstB[c] = Math.min(colWorstB[c], b);
 
       // discourage near ±60 "one-cell decides" boards
       extremePenalty += Math.max(0, Math.abs(a) - EXTREME_START) * 0.6;
@@ -117,17 +121,37 @@ function scoreBoard(board) {
   const spreadA = Math.max(...rowSumA) - Math.min(...rowSumA);
   const spreadB = Math.max(...colSumB) - Math.min(...colSumB);
 
+  // Game-theory guardrail: avoid "必输的选择"
+  // A picks row, so its guaranteed payoff is the row whose minimum a is largest.
+  // B picks col, so its guaranteed payoff is the column whose minimum b is largest.
+  const guaranteeA = Math.max(...rowWorstA);
+  const guaranteeB = Math.max(...colWorstB);
+
+  // Penalize if the guaranteed value for either side is far from 0
+  // (meaning one side has a dominating/losing pure strategy).
+  const dominancePenalty =
+    Math.max(0, Math.abs(guaranteeA) - 5) + Math.max(0, Math.abs(guaranteeB) - 5);
+
+  // Extra penalty if any single row/col is catastrophic for its chooser.
+  const catastrophicPenalty =
+    rowWorstA.reduce((s, v) => s + Math.max(0, -v - 12), 0) +
+    colWorstB.reduce((s, v) => s + Math.max(0, -v - 12), 0);
+
   // weights
   const wStd = 1.2;
   const wMean = 1.2;
   const wSpread = 0.15;
   const wExtreme = 1.0;
+  const wDominance = 1.1;
+  const wCatastrophic = 0.6;
 
   const score =
     wStd * (std(rowSumA) + std(colSumB)) +
     wMean * (Math.abs(meanA) + Math.abs(meanB)) +
     wSpread * (spreadA + spreadB) +
-    wExtreme * extremePenalty;
+    wExtreme * extremePenalty +
+    wDominance * dominancePenalty +
+    wCatastrophic * catastrophicPenalty;
 
   return { score, rowSumA, colSumB, meanA, meanB, spreadA, spreadB };
 }
