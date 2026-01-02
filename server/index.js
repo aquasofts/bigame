@@ -222,6 +222,16 @@ function genFairBoard(scores = { A: 0, B: 0 }) {
 // --------------------- Rooms state ---------------------
 const rooms = new Map();
 
+function ensureSpectatorSet(room) {
+  if (!room.spectators) room.spectators = new Set();
+}
+
+function removeSpectator(room, socketId) {
+  if (!room?.spectators) return false;
+  const existed = room.spectators.delete(socketId);
+  return existed;
+}
+
 function genRoomId() {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   let s = "";
@@ -238,6 +248,7 @@ function publicState(room) {
     picks: room.picks,
     board: room.board,
     active: room.active,
+    spectatorCount: room.spectators ? room.spectators.size : 0,
   };
 }
 
@@ -281,6 +292,13 @@ function cleanupRoomAfterDeparture(roomId, room) {
   if (room.players.A || room.players.B) {
     resetRoomAfterLeave(room);
     return;
+  }
+  if (room.spectators?.size) {
+    for (const sid of room.spectators.values()) {
+      const s = io.sockets.sockets.get(sid);
+      if (s) s.leave(roomId);
+    }
+    room.spectators.clear();
   }
   rooms.delete(roomId);
 }
@@ -336,21 +354,28 @@ function detachFromOtherRooms(socket, keepRoomId) {
     const leavingTeams = [];
     if (room.players.A === socket.id) leavingTeams.push("A");
     if (room.players.B === socket.id) leavingTeams.push("B");
+    const wasSpectator = removeSpectator(room, socket.id);
 
-    if (!leavingTeams.length) continue;
+    if (!leavingTeams.length && !wasSpectator) continue;
 
-    leavingTeams.forEach((team) => {
-      room.players[team] = null;
-      clearDisconnectTimer(room, team);
-      if (room.offlineSince) room.offlineSince[team] = null;
-    });
+    if (leavingTeams.length) {
+      leavingTeams.forEach((team) => {
+        room.players[team] = null;
+        clearDisconnectTimer(room, team);
+        if (room.offlineSince) room.offlineSince[team] = null;
+      });
 
-    resetRoomAfterLeave(room);
-    socket.leave(rid);
+      resetRoomAfterLeave(room);
+      socket.leave(rid);
 
-    io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
-    io.to(rid).emit("roomState", publicState(room));
-    cleanupRoomAfterDeparture(rid, room);
+      io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
+      io.to(rid).emit("roomState", publicState(room));
+      cleanupRoomAfterDeparture(rid, room);
+    } else if (wasSpectator) {
+      socket.leave(rid);
+      io.to(rid).emit("roomState", publicState(room));
+      if (!room.players.A && !room.players.B) cleanupRoomAfterDeparture(rid, room);
+    }
   }
 }
 
@@ -378,6 +403,7 @@ app.post("/api/rooms", (req, res) => {
     picks: { A: null, B: null },
     board: null,
     active: false,
+    spectators: new Set(),
   });
 
   initDisconnectTracking(rooms.get(roomId));
@@ -394,6 +420,7 @@ function listRooms(req, res) {
       players: { A: !!room.players.A, B: !!room.players.B },
       active: room.active,
       createdAt: room.createdAt,
+      spectatorCount: room.spectators ? room.spectators.size : 0,
     }))
     .sort((a, b) => b.createdAt - a.createdAt);
 
@@ -426,10 +453,23 @@ io.on("connection", (socket) => {
       const room = rooms.get(rid);
       if (!room) return socket.emit("errorMsg", { message: "房间不存在" });
 
-      if (team !== "A" && team !== "B") return socket.emit("errorMsg", { message: "队伍必须是 A 或 B" });
+      const isSpectator = team === "SPECTATOR";
+      if (team !== "A" && team !== "B" && !isSpectator)
+        return socket.emit("errorMsg", { message: "队伍必须是 A、B 或观战" });
 
       // Ensure a socket can only live in one room to avoid ghost rooms
       detachFromOtherRooms(socket, rid);
+
+      ensureSpectatorSet(room);
+      removeSpectator(room, socket.id);
+
+      if (isSpectator) {
+        room.spectators.add(socket.id);
+        socket.join(rid);
+        socket.emit("roomState", publicState(room));
+        io.to(rid).emit("roomState", publicState(room));
+        return;
+      }
 
       // team capacity 1
       if (room.players[team] && room.players[team] !== socket.id) {
@@ -501,8 +541,9 @@ io.on("connection", (socket) => {
     const leavingTeams = [];
     if (room.players.A === socket.id) leavingTeams.push("A");
     if (room.players.B === socket.id) leavingTeams.push("B");
+    const wasSpectator = removeSpectator(room, socket.id);
 
-    if (!leavingTeams.length) return socket.emit("errorMsg", { message: "你不在这个房间" });
+    if (!leavingTeams.length && !wasSpectator) return socket.emit("errorMsg", { message: "你不在这个房间" });
 
     leavingTeams.forEach((team) => {
       room.players[team] = null;
@@ -512,15 +553,20 @@ io.on("connection", (socket) => {
 
     socket.leave(rid);
 
-    const hasPlayers = !!room.players.A || !!room.players.B;
-    if (hasPlayers) {
-      resetRoomAfterLeave(room);
-      io.to(rid).emit("opponentLeft", { message: "对手已离开，房间已重置等待新玩家" });
+    if (leavingTeams.length) {
+      const hasPlayers = !!room.players.A || !!room.players.B;
+      if (hasPlayers) {
+        resetRoomAfterLeave(room);
+        io.to(rid).emit("opponentLeft", { message: "对手已离开，房间已重置等待新玩家" });
+        io.to(rid).emit("roomState", publicState(room));
+        io.to(rid).emit("waiting", { message: "等待另一位玩家加入..." });
+      } else {
+        resetRoomAfterLeave(room);
+        cleanupRoomAfterDeparture(rid, room);
+      }
+    } else if (wasSpectator) {
       io.to(rid).emit("roomState", publicState(room));
-      io.to(rid).emit("waiting", { message: "等待另一位玩家加入..." });
-    } else {
-      resetRoomAfterLeave(room);
-      rooms.delete(rid);
+      if (!room.players.A && !room.players.B) cleanupRoomAfterDeparture(rid, room);
     }
 
     socket.emit("roomState", publicState(room));
@@ -589,6 +635,7 @@ io.on("connection", (socket) => {
 
       if (room.players.A === socket.id) disconnectedTeams.push("A");
       if (room.players.B === socket.id) disconnectedTeams.push("B");
+      const wasSpectator = removeSpectator(room, socket.id);
 
       if (disconnectedTeams.length) {
         disconnectedTeams.forEach((team) => {
@@ -613,6 +660,10 @@ io.on("connection", (socket) => {
 
         io.to(rid).emit("roomState", publicState(room));
         io.to(rid).emit("opponentDisconnected", { message: "对手断线，等待 1 分钟内重连..." });
+      } else if (wasSpectator) {
+        socket.leave(rid);
+        io.to(rid).emit("roomState", publicState(room));
+        if (!room.players.A && !room.players.B) cleanupRoomAfterDeparture(rid, room);
       }
     }
   });
