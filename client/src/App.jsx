@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createRoom } from "./api";
+import { createRoom, fetchSoloRooms } from "./api";
 import { makeSocket } from "./socket";
 import "./styles.css";
 
@@ -58,6 +58,9 @@ export default function App() {
   const [lastChosen, setLastChosen] = useState(null);
   const [revealTick, setRevealTick] = useState(0);
   const [gameOver, setGameOver] = useState(null);
+  const [roomListOpen, setRoomListOpen] = useState(false);
+  const [soloRooms, setSoloRooms] = useState([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
 
   const myTeam = useMemo(() => team, [team]);
 
@@ -169,6 +172,41 @@ export default function App() {
     setToast({ type: "info", text: "请求再战一局..." });
   }
 
+  async function loadSoloRooms() {
+    try {
+      setRoomsLoading(true);
+      const { rooms } = await fetchSoloRooms();
+      setSoloRooms(rooms || []);
+    } catch (e) {
+      setToast({ type: "bad", text: e.message || "获取房间列表失败" });
+    } finally {
+      setRoomsLoading(false);
+    }
+  }
+
+  function openSoloRooms() {
+    setRoomListOpen(true);
+  }
+
+  useEffect(() => {
+    if (roomListOpen) loadSoloRooms();
+  }, [roomListOpen]);
+
+  function joinSoloRoom(room) {
+    if (!room?.roomId || !room?.availableTeam) return;
+    const rid = String(room.roomId || "").trim().toUpperCase();
+    const teamToUse = room.availableTeam;
+
+    setTeam(teamToUse);
+    setJoinRoomId(rid);
+    setRoomId(rid);
+    setGameOver(null);
+    setLastChosen(null);
+    socketRef.current?.emit("joinRoom", { roomId: rid, team: teamToUse });
+    setToast({ type: "info", text: `加入房间 ${rid}，队伍 ${teamToUse}...` });
+    setRoomListOpen(false);
+  }
+
   function pickRow(row) {
     if (!roomId) return;
     socketRef.current?.emit("pickRow", { roomId, row });
@@ -261,6 +299,10 @@ export default function App() {
               <div className="formRow">
                 <button className="btn btnPrimary" onClick={onCreateRoom}>创建新房间</button>
                 <button className="btn" onClick={onShareRoom} disabled={!roomId}>分享（复制）</button>
+              </div>
+
+              <div className="formRow">
+                <button className="btn btnGhost" onClick={openSoloRooms} disabled={!connected}>查找只有一名玩家的房间</button>
               </div>
 
               <div className="formRow">
@@ -442,6 +484,45 @@ export default function App() {
           </div>
         </section>
       </main>
+
+      {roomListOpen && (
+        <div className="modalBack">
+          <div className="modal roomListModal">
+            <div className="modalTitle">只有一名玩家的房间</div>
+            <div className="modalBody roomListBody">
+              <div className="roomListActions">
+                <button className="btn" onClick={loadSoloRooms} disabled={roomsLoading}>
+                  {roomsLoading ? "刷新中…" : "刷新列表"}
+                </button>
+                <button className="btn" onClick={() => setRoomListOpen(false)}>关闭</button>
+              </div>
+
+              {roomsLoading && <div className="roomListEmpty">正在加载房间列表…</div>}
+              {!roomsLoading && soloRooms.length === 0 && (
+                <div className="roomListEmpty">暂时没有只有一名玩家的房间，稍后再试试。</div>
+              )}
+              {!roomsLoading && soloRooms.length > 0 && (
+                <div className="roomList">
+                  {soloRooms.map((r) => (
+                    <div key={r.roomId} className="roomItem">
+                      <div className="roomInfo">
+                        <div className="roomId">{r.roomId}</div>
+                        <div className="roomMeta">
+                          <span className="roomTag">可加入：{TEAM_LABEL(r.availableTeam)}</span>
+                          <span className="roomTag subtle">
+                            A：{r.players?.A ? "有人" : "空"} · B：{r.players?.B ? "有人" : "空"}
+                          </span>
+                        </div>
+                      </div>
+                      <button className="btn btnPrimary" onClick={() => joinSoloRoom(r)}>一键加入</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {gameOver && (
         <div className="modalBack">

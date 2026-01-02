@@ -237,6 +237,14 @@ function resetPicks(room) {
   room.picks = { A: null, B: null };
 }
 
+function availableTeam(room) {
+  const hasA = !!room.players.A;
+  const hasB = !!room.players.B;
+  if (hasA && !hasB) return "B";
+  if (!hasA && hasB) return "A";
+  return null;
+}
+
 function bothPicked(room) {
   return room.picks.A !== null && room.picks.B !== null;
 }
@@ -304,6 +312,20 @@ app.post("/api/rooms", (req, res) => {
   initDisconnectTracking(rooms.get(roomId));
 
   res.json({ roomId });
+});
+
+app.get("/api/rooms/solo", (req, res) => {
+  const soloRooms = Array.from(rooms.values())
+    .filter((room) => !room.active && !!availableTeam(room))
+    .map((room) => ({
+      roomId: room.id,
+      availableTeam: availableTeam(room),
+      players: { A: !!room.players.A, B: !!room.players.B },
+      createdAt: room.createdAt,
+    }))
+    .sort((a, b) => b.createdAt - a.createdAt);
+
+  res.json({ rooms: soloRooms });
 });
 
 // healthcheck (optional)
