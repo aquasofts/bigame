@@ -3,7 +3,8 @@ import { createRoom, fetchRooms } from "./api";
 import { makeSocket } from "./socket";
 import "./styles.css";
 
-const TEAM_LABEL = (t) => (t === "A" ? "A（选行）" : t === "B" ? "B（选列）" : "未选择");
+const TEAM_LABEL = (t) =>
+  t === "A" ? "A（选行）" : t === "B" ? "B（选列）" : t === "SPECTATOR" ? "观战" : "未选择";
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
@@ -66,6 +67,7 @@ export default function App() {
   const [, forceTick] = useState(0);
 
   const myTeam = useMemo(() => team, [team]);
+  const isSpectator = myTeam === "SPECTATOR";
 
   useEffect(() => {
     const s = makeSocket();
@@ -110,6 +112,7 @@ export default function App() {
         round: payload.round,
         picks: prev?.picks ?? { A: null, B: null },
         players: prev?.players ?? { A: null, B: null },
+        spectatorCount: prev?.spectatorCount ?? 0,
       }));
       info(
         `第 ${payload.round} 回合：回合结算  A${payload.delta.A >= 0 ? "+" : ""}${payload.delta.A}  B${payload.delta.B >= 0 ? "+" : ""}${payload.delta.B}`
@@ -177,7 +180,7 @@ export default function App() {
     setGameOver(null);
     setLastChosen(null);
     socketRef.current?.emit("joinRoom", { roomId: rid, team: myTeam });
-    setToast({ type: "info", text: `加入房间 ${rid}，队伍 ${myTeam}...` });
+    setToast({ type: "info", text: `加入房间 ${rid}，队伍 ${TEAM_LABEL(myTeam)}...` });
   }
 
   async function onShareRoom() {
@@ -227,10 +230,28 @@ export default function App() {
     if (roomListOpen) loadRoomList();
   }, [roomListOpen]);
 
+  function joinSpectator(rid) {
+    const roomIdNormalized = String(rid || "").trim().toUpperCase();
+    if (!roomIdNormalized) return;
+
+    setTeam("SPECTATOR");
+    setJoinRoomId(roomIdNormalized);
+    setRoomId(roomIdNormalized);
+    setGameOver(null);
+    setLastChosen(null);
+    socketRef.current?.emit("joinRoom", { roomId: roomIdNormalized, team: "SPECTATOR" });
+    setToast({ type: "info", text: `进入房间 ${roomIdNormalized} 观战中…` });
+    setRoomListOpen(false);
+  }
+
   function joinAvailableRoom(room) {
-    if (!room?.roomId || !room?.availableTeam) return;
+    if (!room?.roomId) return;
     const rid = String(room.roomId || "").trim().toUpperCase();
     const teamToUse = room.availableTeam;
+
+    if (!teamToUse) {
+      return joinSpectator(rid);
+    }
 
     setTeam(teamToUse);
     setJoinRoomId(rid);
@@ -243,17 +264,26 @@ export default function App() {
   }
 
   function pickRow(row) {
-    if (!roomId) return;
+    if (!roomId || isSpectator) return;
     socketRef.current?.emit("pickRow", { roomId, row });
   }
   function pickCol(col) {
-    if (!roomId) return;
+    if (!roomId || isSpectator) return;
     socketRef.current?.emit("pickCol", { roomId, col });
   }
 
   // ---- 兜底：把 state 拆出来都给默认值，避免 render 报错白屏 ----
   const safeState =
-    state || { players: { A: null, B: null }, picks: { A: null, B: null }, scores: { A: 0, B: 0 }, round: 0, board: null, active: false };
+    state ||
+    {
+      players: { A: null, B: null },
+      picks: { A: null, B: null },
+      scores: { A: 0, B: 0 },
+      round: 0,
+      board: null,
+      active: false,
+      spectatorCount: 0,
+    };
   const board = safeState.board;
   const bothJoined = !!safeState.players?.A && !!safeState.players?.B;
   const inGame = !!safeState.active;
@@ -267,13 +297,14 @@ export default function App() {
 
   const scoreA = safeState.scores?.A ?? 0;
   const scoreB = safeState.scores?.B ?? 0;
+  const spectatorCount = safeState.spectatorCount ?? 0;
 
   const pickedRow = safeState.picks?.A ?? null;
   const pickedCol = safeState.picks?.B ?? null;
   const myPickValue = myTeam === "A" ? pickedRow : pickedCol;
-  const myPickLabel = myPickValue !== null ? `${myTeam === "A" ? "行" : "列"} ${myPickValue + 1}` : "未选";
+  const myPickLabel = isSpectator ? "观战中" : myPickValue !== null ? `${myTeam === "A" ? "行" : "列"} ${myPickValue + 1}` : "未选";
   const opponentPickValue = myTeam === "A" ? pickedCol : pickedRow;
-  const opponentPickLabel = opponentPickValue !== null ? "已选择" : "未选";
+  const opponentPickLabel = isSpectator ? "观战中" : opponentPickValue !== null ? "已选择" : "未选";
   const createCooldownLeft = Math.max(0, Math.ceil((createCooldownUntil - Date.now()) / 1000));
   const createDisabled = creatingRoom || createCooldownLeft > 0 || inGame;
   const createBtnLabel = createCooldownLeft > 0 ? `创建新房间（${createCooldownLeft}s）` : "创建新房间";
@@ -366,6 +397,9 @@ export default function App() {
                   <button className={`segBtn ${team === "B" ? "segOn" : ""}`} onClick={() => setTeam("B")} type="button" disabled={inGame}>
                     B（选列）
                   </button>
+                  <button className={`segBtn ${team === "SPECTATOR" ? "segOn" : ""}`} onClick={() => setTeam("SPECTATOR")} type="button" disabled={inGame}>
+                    观战
+                  </button>
                 </div>
                 <button className="btn" onClick={onJoin} disabled={!connected || inGame}>加入</button>
               </div>
@@ -388,6 +422,7 @@ export default function App() {
                   <div className="pSub">{safeState.players?.B ? "已加入" : "未加入"}</div>
                 </div>
               </div>
+              <div className="spectatorInfo">观战人数：{spectatorCount}</div>
             </div>
           </div>
         </section>
@@ -487,7 +522,9 @@ export default function App() {
                     </div>
 
                     <div className="actions">
-                      {myTeam === "A" ? (
+                      {isSpectator ? (
+                        <div className="actTitle">你正在观战，无需操作</div>
+                      ) : myTeam === "A" ? (
                         <>
                           <div className="actTitle">你的操作：<b>选择行</b></div>
                           <div className="btnRow">
@@ -553,17 +590,21 @@ export default function App() {
                         <div className="roomId">{r.roomId}</div>
                         <div className="roomMeta">
                           <span className="roomTag">
-                            {r.availableTeam ? `可加入：${TEAM_LABEL(r.availableTeam)}` : "房间已满"}
+                            {r.availableTeam ? `可加入：${TEAM_LABEL(r.availableTeam)}` : "房间已满，可观战"}
                           </span>
                           <span className="roomTag subtle">
                             A：{r.players?.A ? "有人" : "空"} · B：{r.players?.B ? "有人" : "空"}
                           </span>
+                          <span className="roomTag subtle">观战：{r.spectatorCount ?? 0}</span>
                         </div>
                       </div>
                       {r.availableTeam ? (
-                        <button className="btn btnPrimary" onClick={() => joinAvailableRoom(r)}>一键加入</button>
+                        <div className="roomActions">
+                          <button className="btn btnPrimary" onClick={() => joinAvailableRoom(r)}>一键加入</button>
+                          <button className="btn" onClick={() => joinSpectator(r.roomId)}>观战</button>
+                        </div>
                       ) : (
-                        <button className="btn" disabled>房间已满</button>
+                        <button className="btn btnPrimary" onClick={() => joinSpectator(r.roomId)}>进入观战</button>
                       )}
                     </div>
                   ))}
@@ -591,7 +632,7 @@ export default function App() {
             </div>
             <div className="modalActions">
               <button className="btn" onClick={() => setGameOver(null)}>关闭</button>
-              <button className="btn btnPrimary" onClick={onRestart}>再战一局</button>
+              <button className="btn btnPrimary" onClick={onRestart} disabled={isSpectator}>再战一局</button>
             </div>
           </div>
         </div>

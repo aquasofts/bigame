@@ -149,6 +149,11 @@ body{
 }
 .pHead{ display:flex; align-items:center; gap: 8px; font-weight: 800; }
 .pSub{ margin-top: 4px; color: var(--muted); font-size: 12px; }
+.spectatorInfo{
+  margin-top: 8px;
+  color: rgba(210,220,250,.75);
+  font-size: 13px;
+}
 
 .formRow{ display:flex; gap: 10px; align-items:center; margin-top: 10px; }
 .formRow.actionsRow{ flex-wrap: wrap; align-items: stretch; }
@@ -580,6 +585,12 @@ body{
   display:flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+.roomActions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content:flex-end;
 }
 .roomTag{
   border-radius: 999px;
