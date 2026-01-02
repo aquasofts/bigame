@@ -307,8 +307,14 @@ export default function App() {
             <div className="card heroCard">
               <div className="boardTop">
                 <div className="scoreCard">
-                  <div className="scoreLine"><span className="badgeA">A</span><span className="scoreNum">{scoreA}</span></div>
-                  <div className="scoreLine"><span className="badgeB">B</span><span className="scoreNum">{scoreB}</span></div>
+                  <div className="scoreRow">
+                    <div className="scoreLabel"><span className="badgeA">A</span><span>积分</span></div>
+                    <span className="scoreNum">{scoreA}</span>
+                  </div>
+                  <div className="scoreRow">
+                    <div className="scoreLabel"><span className="badgeB">B</span><span>积分</span></div>
+                    <span className="scoreNum">{scoreB}</span>
+                  </div>
                 </div>
 
                 <div className="roundCard">
