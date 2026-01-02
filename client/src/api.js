@@ -2,8 +2,9 @@ const API_BASE = ((import.meta.env.VITE_API_BASE || "").trim() || window.locatio
 
 export async function createRoom() {
   const res = await fetch(`${API_BASE}/api/rooms`, { method: "POST" });
-  if (!res.ok) throw new Error("创建房间失败");
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || "创建房间失败");
+  return data;
 }
 
 export async function fetchRooms() {

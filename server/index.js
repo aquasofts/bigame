@@ -31,6 +31,14 @@ const EXTREME_START = Number(process.env.FAIR_EXTREME_START || 45); // penalty a
 const MAX_BIAS = Number(process.env.FAIR_MAX_BIAS || 6); // rubber band max bias magnitude
 const BIAS_STEP = Number(process.env.FAIR_BIAS_STEP || 25); // scoreDiff/25 -> bias
 const ROUND_DELAY_MS = Number(process.env.ROUND_DELAY_MS || 700);
+const CREATE_COOLDOWN_MS = Number(process.env.CREATE_COOLDOWN_MS || 3000);
+const lastCreateByIp = new Map();
+
+function getIp(req) {
+  const forwarded = (req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  if (forwarded) return forwarded;
+  return req.ip || "unknown";
+}
 
 function normOrigin(origin) {
   if (!origin) return "";
@@ -249,6 +257,15 @@ function bothPicked(room) {
   return room.picks.A !== null && room.picks.B !== null;
 }
 
+function clearRoomIfEmpty(room) {
+  if (room.players.A || room.players.B) return;
+  room.active = false;
+  room.board = null;
+  resetPicks(room);
+  clearDisconnectTimer(room, "A");
+  clearDisconnectTimer(room, "B");
+}
+
 function initDisconnectTracking(room) {
   room.offlineSince = { A: null, B: null };
   room.disconnectTimers = { A: null, B: null };
@@ -293,8 +310,45 @@ function resolveRound(room) {
   };
 }
 
+function detachFromOtherRooms(socket, keepRoomId) {
+  for (const [rid, room] of rooms.entries()) {
+    if (rid === keepRoomId) continue;
+
+    const leavingTeams = [];
+    if (room.players.A === socket.id) leavingTeams.push("A");
+    if (room.players.B === socket.id) leavingTeams.push("B");
+
+    if (!leavingTeams.length) continue;
+
+    leavingTeams.forEach((team) => {
+      room.players[team] = null;
+      clearDisconnectTimer(room, team);
+      if (room.offlineSince) room.offlineSince[team] = null;
+    });
+
+    room.active = false;
+    room.board = null;
+    resetPicks(room);
+    socket.leave(rid);
+
+    io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
+    io.to(rid).emit("roomState", publicState(room));
+    clearRoomIfEmpty(room);
+  }
+}
+
 // --------------------- HTTP API ---------------------
 app.post("/api/rooms", (req, res) => {
+  const ip = getIp(req);
+  const now = Date.now();
+  const last = lastCreateByIp.get(ip) || 0;
+  const diff = now - last;
+  if (diff < CREATE_COOLDOWN_MS) {
+    const wait = Math.ceil((CREATE_COOLDOWN_MS - diff) / 1000);
+    return res.status(429).json({ message: `创建过于频繁，请 ${wait}s 后再试` });
+  }
+  lastCreateByIp.set(ip, now);
+
   let roomId = genRoomId();
   while (rooms.has(roomId)) roomId = genRoomId();
 
@@ -356,6 +410,9 @@ io.on("connection", (socket) => {
       if (!room) return socket.emit("errorMsg", { message: "房间不存在" });
 
       if (team !== "A" && team !== "B") return socket.emit("errorMsg", { message: "队伍必须是 A 或 B" });
+
+      // Ensure a socket can only live in one room to avoid ghost rooms
+      detachFromOtherRooms(socket, rid);
 
       // team capacity 1
       if (room.players[team] && room.players[team] !== socket.id) {
