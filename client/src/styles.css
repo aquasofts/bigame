@@ -151,7 +151,7 @@ body{
 .pSub{ margin-top: 4px; color: var(--muted); font-size: 12px; }
 
 .formRow{ display:flex; gap: 10px; align-items:center; margin-top: 10px; }
-.formRow.actionsRow{ flex-wrap: wrap; }
+.formRow.actionsRow{ flex-wrap: wrap; align-items: stretch; }
 .formRow.joinRow{ justify-content:flex-start; }
 .formRow.inputRow{ align-items: stretch; }
 .formRow.teamRow{ align-items: stretch; }
@@ -225,13 +225,13 @@ body{
 @media (min-width: 900px){
   .actionsRow{
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
   .actionsRow .btn{
     flex: 1 1 0;
     min-width: 0;
     width: 100%;
-    white-space: nowrap;
+    white-space: normal;
   }
   .joinRow{
     width: 100%;
@@ -479,11 +479,20 @@ body{
   inset: 0;
   background: rgba(0,0,0,.55);
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
   z-index: 50;
   padding: 18px;
+  overflow-y: auto;
 }
+.modalBack.spacedTop{ align-items:flex-start; }
+.modalBackCenter{ align-items:center; }
+@media (min-width: 768px){
+  .modalBack{
+    align-items:center;
+  }
+}
+
 .modal{
   width: min(520px, 96vw);
   border-radius: 18px;
@@ -516,6 +525,10 @@ body{
   border-top:1px solid rgba(37,50,87,.55);
 }
 
+.roomListModal{
+  width: min(640px, 96vw);
+  max-height: min(760px, 90vh);
+}
 .roomListModal .roomListActions{
   display:flex;
   gap: 10px;
@@ -525,11 +538,16 @@ body{
   top: 0;
   padding-bottom: 10px;
   background: linear-gradient(180deg, rgba(15,23,48,.94), rgba(15,23,48,.92) 70%, transparent);
+  z-index: 2;
 }
 .roomListBody{
   display:flex;
   flex-direction:column;
   gap: 10px;
+  max-height: min(70vh, 620px);
+  overflow-y: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
 }
 .roomList{
   display:flex;
