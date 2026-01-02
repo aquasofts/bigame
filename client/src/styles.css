@@ -233,6 +233,9 @@ body{
     width: 100%;
     white-space: normal;
   }
+  .actionsRow .btnLeave{
+    grid-column: 1 / -1;
+  }
   .joinRow{
     width: 100%;
   }

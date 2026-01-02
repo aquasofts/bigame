@@ -341,7 +341,7 @@ export default function App() {
                   {createBtnLabel}
                 </button>
                 <button className="btn" onClick={onShareRoom} disabled={!roomId || inGame}>复制房间号</button>
-                <button className="btn btnGhost" onClick={onLeaveRoom} disabled={!roomId}>退出房间</button>
+                <button className="btn btnGhost btnLeave" onClick={onLeaveRoom} disabled={!roomId}>退出房间</button>
               </div>
 
               <div className="formRow joinRow">
