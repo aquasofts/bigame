@@ -240,6 +240,11 @@ body{
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
   padding: 12px;
 }
+.scoreCard{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .scoreLabel{
   display:flex;
   align-items:center;
@@ -247,10 +252,19 @@ body{
   color: rgba(210,220,250,.75);
   font-size: 12px;
 }
+.scoreRow{
+  display:flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border:1px solid rgba(37,50,87,.65);
+  background: rgba(0,0,0,.18);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+}
 .scoreNum{
   font-weight: 900;
   font-size: 20px;
-  margin-top: 6px;
 }
 .roundSub{ color: rgba(210,220,250,.75); font-size: 12px; margin-top: 6px; }
 .roundTitle{ font-weight: 800; letter-spacing: .2px; }
