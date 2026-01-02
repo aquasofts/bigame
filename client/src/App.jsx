@@ -239,6 +239,37 @@ export default function App() {
     if (roomListOpen) loadRoomList();
   }, [roomListOpen]);
 
+  function onDownloadReplay() {
+    if (!gameOver?.history?.length) {
+      return setToast({ type: "bad", text: "暂无可下载的回放数据" });
+    }
+
+    const payload = {
+      roomId: roomId || null,
+      finishedAt: new Date().toISOString(),
+      finalScores: gameOver.finalScores,
+      winner: gameOver.winner,
+      rounds: gameOver.history.map((r) => ({
+        round: r.round,
+        picks: r.picks,
+        delta: r.delta,
+        scoresAfter: r.scoresAfter,
+        board: r.board,
+      })),
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `matrix-game-replay-${roomId || "room"}-${Date.now()}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1200);
+    setToast({ type: "good", text: "回放文件已开始下载" });
+  }
+
   function joinAvailableRoom(room) {
     if (!room?.roomId || !room?.availableTeam) return;
     const rid = String(room.roomId || "").trim().toUpperCase();
@@ -309,6 +340,7 @@ export default function App() {
       : gameOver.winner === "A"
       ? "A 获胜"
       : "B 获胜";
+  const hasReplay = !!gameOver?.history?.length;
 
   return (
     <div className="gRoot">
@@ -602,6 +634,7 @@ export default function App() {
               <div className="modalHint">点击再战即可立刻开新局，或在左侧创建新房间。</div>
             </div>
             <div className="modalActions">
+              <button className="btn" onClick={onDownloadReplay} disabled={!hasReplay}>下载回放</button>
               <button className="btn" onClick={() => setGameOver(null)}>关闭</button>
               <button className="btn btnPrimary" onClick={onRestart}>再战一局</button>
             </div>
