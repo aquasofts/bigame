@@ -151,6 +151,10 @@ body{
 .pSub{ margin-top: 4px; color: var(--muted); font-size: 12px; }
 
 .formRow{ display:flex; gap: 10px; align-items:center; margin-top: 10px; }
+.formRow.actionsRow{ flex-wrap: wrap; }
+.formRow.joinRow{ justify-content:flex-start; }
+.formRow.inputRow{ align-items: stretch; }
+.formRow.teamRow{ align-items: stretch; }
 .input{
   width:100%;
   padding: 10px 12px;
@@ -194,6 +198,7 @@ body{
   cursor:pointer;
   font-weight: 800;
   transition: transform .12s ease, background .12s ease, opacity .12s ease;
+  white-space: nowrap;
 }
 .btn:hover{ background: rgba(255,255,255,.10); }
 .btn:active{ transform: scale(.98); }
@@ -211,6 +216,27 @@ body{
   border-color: rgba(96,170,255,.35);
 }
 .btnPrimary:hover{ background: rgba(96,170,255,.24); }
+
+@media (min-width: 900px){
+  .actionsRow .btn{
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .joinRow .btnGhost{
+    width: auto;
+    min-width: 200px;
+    padding-inline: 18px;
+  }
+  .inputRow .input{
+    min-width: 260px;
+  }
+  .teamRow .seg{
+    flex: 1;
+  }
+  .teamRow .btn{
+    min-width: 120px;
+  }
+}
 
 .toast{
   margin-top: 12px;

@@ -61,6 +61,9 @@ export default function App() {
   const [roomListOpen, setRoomListOpen] = useState(false);
   const [availableRooms, setAvailableRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [createCooldownUntil, setCreateCooldownUntil] = useState(0);
+  const [, forceTick] = useState(0);
 
   const myTeam = useMemo(() => team, [team]);
 
@@ -131,9 +134,24 @@ export default function App() {
     return () => s.disconnect();
   }, []);
 
+  useEffect(() => {
+    const t = setInterval(() => forceTick((x) => x + 1), 300);
+    return () => clearInterval(t);
+  }, []);
+
   async function onCreateRoom() {
+    const cooldownLeft = Math.max(0, Math.ceil((createCooldownUntil - Date.now()) / 1000));
+    if (cooldownLeft > 0) {
+      return setToast({ type: "bad", text: `创建过于频繁，请 ${cooldownLeft}s 后再试` });
+    }
+
     try {
+      setCreatingRoom(true);
+      if (roomId) {
+        socketRef.current?.emit("leaveRoom", { roomId });
+      }
       const { roomId: rid } = await createRoom();
+      setCreateCooldownUntil(Date.now() + 3000);
       setRoomId(rid);
       setJoinRoomId(rid);
       setState(null);
@@ -144,6 +162,11 @@ export default function App() {
       socketRef.current?.emit("joinRoom", { roomId: rid, team: myTeam });
     } catch (e) {
       setToast({ type: "bad", text: e.message || "创建房间失败" });
+      if (String(e?.message || "").includes("频繁")) {
+        setCreateCooldownUntil(Date.now() + 3000);
+      }
+    } finally {
+      setCreatingRoom(false);
     }
   }
 
@@ -249,6 +272,9 @@ export default function App() {
   const myPickLabel = myPickValue !== null ? `${myTeam === "A" ? "行" : "列"} ${myPickValue + 1}` : "未选";
   const opponentPickValue = myTeam === "A" ? pickedCol : pickedRow;
   const opponentPickLabel = opponentPickValue !== null ? "已选择" : "未选";
+  const createCooldownLeft = Math.max(0, Math.ceil((createCooldownUntil - Date.now()) / 1000));
+  const createDisabled = creatingRoom || createCooldownLeft > 0;
+  const createBtnLabel = createCooldownLeft > 0 ? `创建新房间（${createCooldownLeft}s）` : "创建新房间";
 
   const disableRow = (r) => {
     if (!board) return false;
@@ -308,17 +334,19 @@ export default function App() {
             <div className="card cardSection">
               <div className="cardTitle">操作</div>
 
-              <div className="formRow">
-                <button className="btn btnPrimary" onClick={onCreateRoom}>创建新房间</button>
+              <div className="formRow actionsRow">
+                <button className="btn btnPrimary" onClick={onCreateRoom} disabled={!connected || createDisabled}>
+                  {createBtnLabel}
+                </button>
                 <button className="btn" onClick={onShareRoom} disabled={!roomId}>分享（复制）</button>
                 <button className="btn btnGhost" onClick={onLeaveRoom} disabled={!roomId}>退出房间</button>
               </div>
 
-              <div className="formRow">
+              <div className="formRow joinRow">
                 <button className="btn btnGhost" onClick={openRoomList} disabled={!connected}>加入房间</button>
               </div>
 
-              <div className="formRow">
+              <div className="formRow inputRow">
                 <input
                   className="input"
                   value={joinRoomId}
@@ -327,7 +355,7 @@ export default function App() {
                 />
               </div>
 
-              <div className="formRow">
+              <div className="formRow teamRow">
                 <div className="seg">
                   <button className={`segBtn ${team === "A" ? "segOn" : ""}`} onClick={() => setTeam("A")} type="button">
                     A（选行）
