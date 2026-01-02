@@ -241,6 +241,24 @@ function publicState(room) {
   };
 }
 
+function emitRoomState(roomId, room) {
+  const state = publicState(room);
+  io.to(roomId).emit("roomState", state);
+
+  // Tell each socket its authoritative seat to avoid UI drift
+  if (room.players.A) io.to(room.players.A).emit("yourTeam", { team: "A", roomId });
+  if (room.players.B) io.to(room.players.B).emit("yourTeam", { team: "B", roomId });
+}
+
+function emitYourTeam(target, payload) {
+  if (!target) return;
+  if (typeof target === "string") {
+    io.to(target).emit("yourTeam", payload);
+  } else {
+    target.emit("yourTeam", payload);
+  }
+}
+
 function resetPicks(room) {
   room.picks = { A: null, B: null };
 }
@@ -343,13 +361,14 @@ function detachFromOtherRooms(socket, keepRoomId) {
       room.players[team] = null;
       clearDisconnectTimer(room, team);
       if (room.offlineSince) room.offlineSince[team] = null;
+      emitYourTeam(socket, { team: null, roomId: rid });
     });
 
     resetRoomAfterLeave(room);
     socket.leave(rid);
 
     io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
-    io.to(rid).emit("roomState", publicState(room));
+    emitRoomState(rid, room);
     cleanupRoomAfterDeparture(rid, room);
   }
 }
@@ -444,7 +463,7 @@ io.on("connection", (socket) => {
       clearDisconnectTimer(room, team);
       socket.join(rid);
 
-      io.to(rid).emit("roomState", publicState(room));
+      emitRoomState(rid, room);
 
       // auto start when both joined
       if (room.players.A && room.players.B && !room.active) {
@@ -471,7 +490,7 @@ io.on("connection", (socket) => {
     if (room.picks.A !== null) return socket.emit("invalidPick", { message: "本回合你已选过行", state: publicState(room) });
 
     room.picks.A = r;
-    io.to(rid).emit("roomState", publicState(room));
+    emitRoomState(rid, room);
 
     if (bothPicked(room)) finishRound(rid, room);
   });
@@ -488,7 +507,7 @@ io.on("connection", (socket) => {
     if (room.picks.B !== null) return socket.emit("invalidPick", { message: "本回合你已选过列", state: publicState(room) });
 
     room.picks.B = c;
-    io.to(rid).emit("roomState", publicState(room));
+    emitRoomState(rid, room);
 
     if (bothPicked(room)) finishRound(rid, room);
   });
@@ -508,6 +527,7 @@ io.on("connection", (socket) => {
       room.players[team] = null;
       clearDisconnectTimer(room, team);
       if (room.offlineSince) room.offlineSince[team] = null;
+      emitYourTeam(socket, { team: null, roomId: rid });
     });
 
     socket.leave(rid);
@@ -516,7 +536,7 @@ io.on("connection", (socket) => {
     if (hasPlayers) {
       resetRoomAfterLeave(room);
       io.to(rid).emit("opponentLeft", { message: "对手已离开，房间已重置等待新玩家" });
-      io.to(rid).emit("roomState", publicState(room));
+      emitRoomState(rid, room);
       io.to(rid).emit("waiting", { message: "等待另一位玩家加入..." });
     } else {
       resetRoomAfterLeave(room);
@@ -607,11 +627,11 @@ io.on("connection", (socket) => {
             room.offlineSince[team] = null;
 
             io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
-            io.to(rid).emit("roomState", publicState(room));
+            emitRoomState(rid, room);
           }, DISCONNECT_GRACE_MS);
         });
 
-        io.to(rid).emit("roomState", publicState(room));
+        emitRoomState(rid, room);
         io.to(rid).emit("opponentDisconnected", { message: "对手断线，等待 1 分钟内重连..." });
       }
     }

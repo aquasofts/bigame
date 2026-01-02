@@ -87,6 +87,18 @@ export default function App() {
     s.on("errorMsg", ({ message }) => bad(message));
     s.on("waiting", ({ message }) => info(message));
     s.on("roomState", (st) => setState(st));
+    s.on("yourTeam", ({ team: t, roomId: rid }) => {
+      if (t === "A" || t === "B") {
+        setTeam(t);
+        if (rid) {
+          setRoomId(rid);
+          setJoinRoomId(rid);
+        }
+        setToast({ type: "info", text: `服务器确认你是 ${TEAM_LABEL(t)}` });
+      } else {
+        setToast({ type: "info", text: "座位已释放，可重新选择队伍" });
+      }
+    });
 
     s.on("gameStart", (st) => {
       setGameOver(null);
