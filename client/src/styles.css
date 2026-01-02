@@ -244,10 +244,7 @@ body{
   transform-style: preserve-3d;
   transition: transform .6s ease;
 }
-.tile.reveal-1 .tileInner,
-.tile.reveal-2 .tileInner,
-.tile.reveal-3 .tileInner,
-.tile.reveal-4 .tileInner{
+.tile[class*="reveal-"] .tileInner{
   transform: rotateY(180deg);
 }
 .tileFace{
