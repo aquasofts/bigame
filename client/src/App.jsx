@@ -239,6 +239,45 @@ export default function App() {
     if (roomListOpen) loadRoomList();
   }, [roomListOpen]);
 
+  const buildReplayRounds = (history) => {
+    return (history || []).map((r) => {
+      const boardNumbers = (r.board || []).map((row, ri) =>
+        row.map((cell, ci) => ({
+          row: ri,
+          col: ci,
+          a: cell?.a ?? 0,
+          b: cell?.b ?? 0,
+        }))
+      );
+
+      const pickedRow = r?.picks?.A ?? null;
+      const pickedCol = r?.picks?.B ?? null;
+      const chosenCell =
+        pickedRow !== null && pickedCol !== null ? r.board?.[pickedRow]?.[pickedCol] : null;
+
+      return {
+        round: r.round,
+        boardNumbers,
+        picks: {
+          A: {
+            row: pickedRow,
+            label: pickedRow !== null ? `行 ${pickedRow + 1}` : null,
+          },
+          B: {
+            col: pickedCol,
+            label: pickedCol !== null ? `列 ${pickedCol + 1}` : null,
+          },
+        },
+        chosenCell:
+          chosenCell && pickedRow !== null && pickedCol !== null
+            ? { row: pickedRow, col: pickedCol, a: chosenCell.a, b: chosenCell.b }
+            : null,
+        delta: r.delta,
+        scoresAfter: r.scoresAfter,
+      };
+    });
+  };
+
   function onDownloadReplay() {
     if (!gameOver?.history?.length) {
       return setToast({ type: "bad", text: "暂无可下载的回放数据" });
@@ -249,13 +288,9 @@ export default function App() {
       finishedAt: new Date().toISOString(),
       finalScores: gameOver.finalScores,
       winner: gameOver.winner,
-      rounds: gameOver.history.map((r) => ({
-        round: r.round,
-        picks: r.picks,
-        delta: r.delta,
-        scoresAfter: r.scoresAfter,
-        board: r.board,
-      })),
+      totalRounds: gameOver.history.length,
+      replayVersion: 1,
+      rounds: buildReplayRounds(gameOver.history),
     };
 
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -632,6 +667,7 @@ export default function App() {
                 {gameOver.winner === "DRAW" ? "平局" : gameOver.winner === "A" ? "A 获胜" : "B 获胜"}
               </div>
               <div className="modalHint">点击再战即可立刻开新局，或在左侧创建新房间。</div>
+              <div className="modalHint">下载回放可查看 9 回合每个方格的数值，以及 A/B 的行列选择。</div>
             </div>
             <div className="modalActions">
               <button className="btn" onClick={onDownloadReplay} disabled={!hasReplay}>下载回放</button>
