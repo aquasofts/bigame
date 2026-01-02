@@ -340,7 +340,7 @@ export default function App() {
                 <button className="btn btnPrimary" onClick={onCreateRoom} disabled={!connected || createDisabled}>
                   {createBtnLabel}
                 </button>
-                <button className="btn" onClick={onShareRoom} disabled={!roomId || inGame}>分享（复制）</button>
+                <button className="btn" onClick={onShareRoom} disabled={!roomId || inGame}>复制房间号</button>
                 <button className="btn btnGhost" onClick={onLeaveRoom} disabled={!roomId}>退出房间</button>
               </div>
 
