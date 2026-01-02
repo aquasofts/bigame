@@ -314,19 +314,23 @@ app.post("/api/rooms", (req, res) => {
   res.json({ roomId });
 });
 
-app.get("/api/rooms/solo", (req, res) => {
-  const soloRooms = Array.from(rooms.values())
-    .filter((room) => !room.active && !!availableTeam(room))
+function listRooms(req, res) {
+  const withPlayers = Array.from(rooms.values())
+    .filter((room) => room.players.A || room.players.B)
     .map((room) => ({
       roomId: room.id,
       availableTeam: availableTeam(room),
       players: { A: !!room.players.A, B: !!room.players.B },
+      active: room.active,
       createdAt: room.createdAt,
     }))
     .sort((a, b) => b.createdAt - a.createdAt);
 
-  res.json({ rooms: soloRooms });
-});
+  res.json({ rooms: withPlayers });
+}
+
+app.get("/api/rooms/solo", listRooms); // legacy route name
+app.get("/api/rooms/list", listRooms);
 
 // healthcheck (optional)
 app.get("/api/health", (req, res) => {
@@ -413,6 +417,33 @@ io.on("connection", (socket) => {
     io.to(rid).emit("roomState", publicState(room));
 
     if (bothPicked(room)) finishRound(rid, room);
+  });
+
+  socket.on("leaveRoom", ({ roomId }) => {
+    const rid = String(roomId || "").trim().toUpperCase();
+    const room = rooms.get(rid);
+    if (!room) return socket.emit("errorMsg", { message: "房间不存在" });
+
+    const leavingTeams = [];
+    if (room.players.A === socket.id) leavingTeams.push("A");
+    if (room.players.B === socket.id) leavingTeams.push("B");
+
+    if (!leavingTeams.length) return socket.emit("errorMsg", { message: "你不在这个房间" });
+
+    leavingTeams.forEach((team) => {
+      room.players[team] = null;
+      clearDisconnectTimer(room, team);
+      if (room.offlineSince) room.offlineSince[team] = null;
+    });
+
+    room.active = false;
+    resetPicks(room);
+    room.board = null;
+
+    socket.leave(rid);
+    io.to(rid).emit("opponentLeft", { message: "对手已离开，当前对局结束" });
+    io.to(rid).emit("roomState", publicState(room));
+    socket.emit("roomState", publicState(room));
   });
 
   socket.on("restartGame", ({ roomId }) => {

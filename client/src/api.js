@@ -6,8 +6,8 @@ export async function createRoom() {
   return res.json();
 }
 
-export async function fetchSoloRooms() {
-  const res = await fetch(`${API_BASE}/api/rooms/solo`);
+export async function fetchRooms() {
+  const res = await fetch(`${API_BASE}/api/rooms/list`);
   if (!res.ok) throw new Error("获取房间列表失败");
   return res.json();
 }

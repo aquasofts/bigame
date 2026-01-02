@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createRoom, fetchSoloRooms } from "./api";
+import { createRoom, fetchRooms } from "./api";
 import { makeSocket } from "./socket";
 import "./styles.css";
 
@@ -59,7 +59,7 @@ export default function App() {
   const [revealTick, setRevealTick] = useState(0);
   const [gameOver, setGameOver] = useState(null);
   const [roomListOpen, setRoomListOpen] = useState(false);
-  const [soloRooms, setSoloRooms] = useState([]);
+  const [availableRooms, setAvailableRooms] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(false);
 
   const myTeam = useMemo(() => team, [team]);
@@ -163,6 +163,18 @@ export default function App() {
     setToast({ type: ok ? "good" : "bad", text: ok ? "房间号已复制" : "复制失败，请手动复制" });
   }
 
+  function onLeaveRoom() {
+    if (!roomId) return setToast({ type: "bad", text: "还没有房间号" });
+    socketRef.current?.emit("leaveRoom", { roomId });
+    setRoomId("");
+    setJoinRoomId("");
+    setState(null);
+    setLastChosen(null);
+    setRevealTick(0);
+    setGameOver(null);
+    setToast({ type: "info", text: "已退出房间" });
+  }
+
   function onRestart() {
     if (!roomId) return setToast({ type: "bad", text: "还没有房间号" });
     setGameOver(null);
@@ -172,11 +184,11 @@ export default function App() {
     setToast({ type: "info", text: "请求再战一局..." });
   }
 
-  async function loadSoloRooms() {
+  async function loadRoomList() {
     try {
       setRoomsLoading(true);
-      const { rooms } = await fetchSoloRooms();
-      setSoloRooms(rooms || []);
+      const { rooms } = await fetchRooms();
+      setAvailableRooms(rooms || []);
     } catch (e) {
       setToast({ type: "bad", text: e.message || "获取房间列表失败" });
     } finally {
@@ -184,15 +196,15 @@ export default function App() {
     }
   }
 
-  function openSoloRooms() {
+  function openRoomList() {
     setRoomListOpen(true);
   }
 
   useEffect(() => {
-    if (roomListOpen) loadSoloRooms();
+    if (roomListOpen) loadRoomList();
   }, [roomListOpen]);
 
-  function joinSoloRoom(room) {
+  function joinAvailableRoom(room) {
     if (!room?.roomId || !room?.availableTeam) return;
     const rid = String(room.roomId || "").trim().toUpperCase();
     const teamToUse = room.availableTeam;
@@ -299,10 +311,11 @@ export default function App() {
               <div className="formRow">
                 <button className="btn btnPrimary" onClick={onCreateRoom}>创建新房间</button>
                 <button className="btn" onClick={onShareRoom} disabled={!roomId}>分享（复制）</button>
+                <button className="btn btnGhost" onClick={onLeaveRoom} disabled={!roomId}>退出房间</button>
               </div>
 
               <div className="formRow">
-                <button className="btn btnGhost" onClick={openSoloRooms} disabled={!connected}>查找只有一名玩家的房间</button>
+                <button className="btn btnGhost" onClick={openRoomList} disabled={!connected}>加入房间</button>
               </div>
 
               <div className="formRow">
@@ -488,33 +501,39 @@ export default function App() {
       {roomListOpen && (
         <div className="modalBack">
           <div className="modal roomListModal">
-            <div className="modalTitle">只有一名玩家的房间</div>
+            <div className="modalTitle">加入房间</div>
             <div className="modalBody roomListBody">
               <div className="roomListActions">
-                <button className="btn" onClick={loadSoloRooms} disabled={roomsLoading}>
+                <button className="btn" onClick={loadRoomList} disabled={roomsLoading}>
                   {roomsLoading ? "刷新中…" : "刷新列表"}
                 </button>
                 <button className="btn" onClick={() => setRoomListOpen(false)}>关闭</button>
               </div>
 
               {roomsLoading && <div className="roomListEmpty">正在加载房间列表…</div>}
-              {!roomsLoading && soloRooms.length === 0 && (
-                <div className="roomListEmpty">暂时没有只有一名玩家的房间，稍后再试试。</div>
+              {!roomsLoading && availableRooms.length === 0 && (
+                <div className="roomListEmpty">暂时没有可用房间，稍后再试试。</div>
               )}
-              {!roomsLoading && soloRooms.length > 0 && (
+              {!roomsLoading && availableRooms.length > 0 && (
                 <div className="roomList">
-                  {soloRooms.map((r) => (
+                  {availableRooms.map((r) => (
                     <div key={r.roomId} className="roomItem">
                       <div className="roomInfo">
                         <div className="roomId">{r.roomId}</div>
                         <div className="roomMeta">
-                          <span className="roomTag">可加入：{TEAM_LABEL(r.availableTeam)}</span>
+                          <span className="roomTag">
+                            {r.availableTeam ? `可加入：${TEAM_LABEL(r.availableTeam)}` : "房间已满"}
+                          </span>
                           <span className="roomTag subtle">
                             A：{r.players?.A ? "有人" : "空"} · B：{r.players?.B ? "有人" : "空"}
                           </span>
                         </div>
                       </div>
-                      <button className="btn btnPrimary" onClick={() => joinSoloRoom(r)}>一键加入</button>
+                      {r.availableTeam ? (
+                        <button className="btn btnPrimary" onClick={() => joinAvailableRoom(r)}>一键加入</button>
+                      ) : (
+                        <button className="btn" disabled>房间已满</button>
+                      )}
                     </div>
                   ))}
                 </div>
