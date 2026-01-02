@@ -106,7 +106,7 @@ export default function App() {
         players: prev?.players ?? { A: null, B: null },
       }));
       info(
-        `第 ${payload.round} 回合：(${payload.chosen.row},${payload.chosen.col})  A${payload.delta.A >= 0 ? "+" : ""}${payload.delta.A}  B${payload.delta.B >= 0 ? "+" : ""}${payload.delta.B}`
+        `第 ${payload.round} 回合：回合结算  A${payload.delta.A >= 0 ? "+" : ""}${payload.delta.A}  B${payload.delta.B >= 0 ? "+" : ""}${payload.delta.B}`
       );
     });
 
@@ -195,6 +195,10 @@ export default function App() {
 
   const pickedRow = safeState.picks?.A ?? null;
   const pickedCol = safeState.picks?.B ?? null;
+  const myPickValue = myTeam === "A" ? pickedRow : pickedCol;
+  const myPickLabel = myPickValue !== null ? `${myTeam === "A" ? "行" : "列"} ${myPickValue}` : "未选";
+  const opponentPickValue = myTeam === "A" ? pickedCol : pickedRow;
+  const opponentPickLabel = opponentPickValue !== null ? "已选择" : "未选";
 
   const disableRow = (r) => {
     if (!board) return false;
@@ -324,14 +328,10 @@ export default function App() {
 
                   <div className="pickRow">
                     <div className="pickPill">
-                      我方：<b>{myTeam === "A"
-                        ? safeState.picks?.A !== null ? `行 ${safeState.picks.A}` : "未选"
-                        : safeState.picks?.B !== null ? `列 ${safeState.picks.B}` : "未选"}</b>
+                      我方：<b>{myPickLabel}</b>
                     </div>
                     <div className="pickPill">
-                      对手：<b>{myTeam === "A"
-                        ? safeState.picks?.B !== null ? `列 ${safeState.picks.B}` : "未选"
-                        : safeState.picks?.A !== null ? `行 ${safeState.picks.A}` : "未选"}</b>
+                      对手：<b>{opponentPickLabel}</b>
                     </div>
                   </div>
                 </div>
